@@ -1,3 +1,18 @@
+"""
+╔══════════════════════════════════════════════════════════════════════════════╗
+║   eCommerce Funnel & Retention Analysis — Streamlit Dashboard  v2           ║
+║   Dataset : eCommerce Behavior Data — Multi-Category Store (Kaggle)         ║
+║                                                                              ║
+║   SETUP                                                                      ║
+║   pip install streamlit pandas numpy plotly                                  ║
+║                                                                              ║
+║   RUN                                                                        ║
+║   streamlit run app.py                                                       ║
+║                                                                              ║
+║   NO FILE UPLOAD — type the CSV path in the sidebar (handles 9 GB+ fine).  ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+"""
+
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -6,7 +21,9 @@ import plotly.graph_objects as go
 import gc, os, warnings
 warnings.filterwarnings("ignore")
 
-
+# ─────────────────────────────────────────────────────────────────────────────
+# PAGE CONFIG  ← must be first Streamlit call
+# ─────────────────────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="eCommerce Funnel & Retention",
     page_icon="🛒",
@@ -14,6 +31,9 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+# ─────────────────────────────────────────────────────────────────────────────
+# COLORS  — bright, high-contrast, readable on dark backgrounds
+# ─────────────────────────────────────────────────────────────────────────────
 C = {
     "blue":   "#4FA8D5",
     "purple": "#C97BC9",
@@ -26,7 +46,9 @@ C = {
 }
 PALETTE = [C["blue"], C["purple"], C["orange"], C["red"], C["green"], C["teal"], C["yellow"]]
 
-
+# ─────────────────────────────────────────────────────────────────────────────
+# GLOBAL CSS  — forces dark theme throughout; all text/bg explicit
+# ─────────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
 /* ── App background & text ── */
@@ -150,7 +172,9 @@ iframe { background: #0F1117 !important; }
 """, unsafe_allow_html=True)
 
 
-
+# ─────────────────────────────────────────────────────────────────────────────
+# HELPERS
+# ─────────────────────────────────────────────────────────────────────────────
 def kpi_card(value: str, label: str, color: str = C["blue"], delta: str = "") -> str:
     delta_html = f'<div class="kpi-delta" style="color:{color};">{delta}</div>' if delta else ""
     return (
@@ -181,6 +205,9 @@ def dark_layout(**kw) -> dict:
     return base
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# CONSTANTS
+# ─────────────────────────────────────────────────────────────────────────────
 DTYPES = {
     "event_type":    "category",
     "product_id":    "int32",
@@ -192,6 +219,9 @@ DTYPES = {
 VALID_EVENTS = ["view", "cart", "remove_from_cart", "purchase"]
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# CHUNKED LOADER  — no file-size ceiling
+# ─────────────────────────────────────────────────────────────────────────────
 @st.cache_data(show_spinner=False)
 def load_csv(csv_path: str, sample_rows: int, chunk_size: int = 500_000) -> pd.DataFrame:
     progress = st.sidebar.progress(0, text="Reading file…")
@@ -217,6 +247,7 @@ def load_csv(csv_path: str, sample_rows: int, chunk_size: int = 500_000) -> pd.D
     df = pd.concat(chunks, ignore_index=True)
     del chunks; gc.collect()
 
+    # ── Clean ─────────────────────────────────────────────────────────────
     df.drop_duplicates(inplace=True)
     df.dropna(subset=["event_time", "event_type", "user_id"], inplace=True)
     df = df[df["event_type"].isin(VALID_EVENTS)].copy()
@@ -225,6 +256,7 @@ def load_csv(csv_path: str, sample_rows: int, chunk_size: int = 500_000) -> pd.D
     if df["event_time"].dt.tz is None:
         df["event_time"] = df["event_time"].dt.tz_localize("UTC")
 
+    # ── Feature engineering ───────────────────────────────────────────────
     df["date"]         = pd.to_datetime(df["event_time"].dt.date)
     df["hour"]         = df["event_time"].dt.hour.astype("int8")
     df["day_of_week"]  = df["event_time"].dt.day_name().astype("category")
@@ -240,7 +272,9 @@ def load_csv(csv_path: str, sample_rows: int, chunk_size: int = 500_000) -> pd.D
     return df
 
 
-
+# ─────────────────────────────────────────────────────────────────────────────
+# CACHED METRIC COMPUTATIONS
+# ─────────────────────────────────────────────────────────────────────────────
 @st.cache_data(show_spinner=False)
 def compute_funnel(df):
     viewers    = int(df[df["event_type"] == "view"]["user_id"].nunique())
@@ -328,7 +362,9 @@ def compute_daily_rev(df):
     return dr
 
 
-
+# ─────────────────────────────────────────────────────────────────────────────
+# SIDEBAR
+# ─────────────────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("## ⚙️ Data Source")
     st.markdown(
@@ -352,8 +388,13 @@ with st.sidebar:
     csv_path = st.text_input(
         "📁 Full CSV path",
         value=default_path,
-        placeholder="/data/2019-Nov.csv",
-        help="Absolute or relative path to any monthly Kaggle CSV.",
+        placeholder="C:/Users/you/Desktop/ecom/2019-Nov.csv",
+        help=(
+            "Windows: C:/Users/sniks/OneDrive/Desktop/ecom/2019-Nov.csv  "
+            "(use forward slashes or double backslashes)\n"
+            "Mac/Linux: /data/2019-Nov.csv\n"
+            "Same folder as app.py: just type  2019-Nov.csv"
+        ),
     )
 
     st.markdown("---")
@@ -398,7 +439,9 @@ with st.sidebar:
 # ─────────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="dash-header">
-  <h1>🛒 eCommerce Funnel & Retention Analysis</h1>
+  <h1>🛒 eCommerce Funnel &amp; Retention Analysis</h1>
+  <p>Multi-Category Online Store · Kaggle Dataset · Amazon Interview-Level Dashboard</p>
+  <span class="dash-badge">Path-based loader · No upload limit · Dark-mode native</span>
 </div>
 """, unsafe_allow_html=True)
 
@@ -413,13 +456,26 @@ if load_btn:
     if not csv_path:
         st.error("⚠️  Enter a CSV path in the sidebar first.")
         st.stop()
-    if not os.path.exists(csv_path):
-        st.error(f"❌  File not found: `{csv_path}`")
+
+    # Normalize path: strip surrounding quotes, fix Windows/Unix slashes
+    csv_path_clean = csv_path.strip().strip('"').strip("'")
+    csv_path_clean = os.path.normpath(csv_path_clean)
+
+    if not os.path.exists(csv_path_clean):
+        st.error(
+            f"❌  File not found: `{csv_path_clean}`\n\n"
+            "**Quick fixes:**\n"
+            "- Place `2019-Nov.csv` in the **same folder as app.py** and just type `2019-Nov.csv`\n"
+            "- On Windows, use double backslashes or forward slashes: "
+            "`C:/Users/sniks/OneDrive/Desktop/ecom/2019-Nov.csv`\n"
+            "- Check spelling — the filename is case-sensitive"
+        )
         st.stop()
-    size_gb = os.path.getsize(csv_path) / 1e9
-    with st.spinner(f"⏳ Loading **{os.path.basename(csv_path)}** ({size_gb:.2f} GB)…"):
-        st.session_state["df_full"] = load_csv(csv_path, sample_rows, chunk_size)
-    st.success(f"✅ Loaded {len(st.session_state['df_full']):,} rows from {os.path.basename(csv_path)}")
+
+    size_gb = os.path.getsize(csv_path_clean) / 1e9
+    with st.spinner(f"⏳ Loading **{os.path.basename(csv_path_clean)}** ({size_gb:.2f} GB)…"):
+        st.session_state["df_full"] = load_csv(csv_path_clean, sample_rows, chunk_size)
+    st.success(f"✅ Loaded {len(st.session_state['df_full']):,} rows from {os.path.basename(csv_path_clean)}")
 
 # ── Not yet loaded ────────────────────────────────────────────────────────────
 if st.session_state["df_full"] is None:
@@ -430,7 +486,10 @@ if st.session_state["df_full"] is None:
         1. Download any monthly file from
         <a href="https://www.kaggle.com/mkechinov/ecommerce-behavior-data-from-multi-category-store"
            target="_blank">Kaggle</a><br>
-        2. Enter the path in the sidebar — e.g. <code>/data/2019-Nov.csv</code><br>
+        2. Enter the path in the sidebar — e.g.<br>
+        &nbsp;&nbsp;&nbsp;<code>C:/Users/sniks/OneDrive/Desktop/ecom/2019-Nov.csv</code> (Windows)<br>
+        &nbsp;&nbsp;&nbsp;<code>/data/2019-Nov.csv</code> (Mac/Linux)<br>
+        &nbsp;&nbsp;&nbsp;<code>2019-Nov.csv</code> (if CSV is in the same folder as app.py)<br>
         3. Choose rows, then click <b>▶ Load / Reload Data</b>
       </p>
       <p style="margin-top:14px;font-size:0.82rem;color:#6B7280;">
