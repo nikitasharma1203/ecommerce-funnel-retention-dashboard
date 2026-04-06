@@ -1,15 +1,20 @@
 """
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║   eCommerce Funnel & Retention Analysis — Streamlit Dashboard  v2           ║
-║   Dataset : eCommerce Behavior Data — Multi-Category Store (Kaggle)         ║
+║   eCommerce Funnel & Retention Analysis — Streamlit Dashboard  v3           ║
+║   Works on Streamlit Cloud and locally.                                     ║
+║                                                                              ║
+║   DATA LOADING — 3 options (pick any one):                                  ║
+║   1. Upload CSV directly in the browser (up to 2 GB via .streamlit/config)  ║
+║   2. Paste a Google Drive / direct download URL                             ║
+║   3. Type a local file path (only works when running locally, not on Cloud) ║
 ║                                                                              ║
 ║   SETUP                                                                      ║
-║   pip install streamlit pandas numpy plotly                                  ║
+║   pip install streamlit pandas numpy plotly requests                        ║
+║   mkdir -p .streamlit                                                        ║
+║   echo "[server]\nmaxUploadSize = 2000" > .streamlit/config.toml           ║
 ║                                                                              ║
 ║   RUN                                                                        ║
 ║   streamlit run app.py                                                       ║
-║                                                                              ║
-║   NO FILE UPLOAD — type the CSV path in the sidebar (handles 9 GB+ fine).  ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
 
@@ -18,7 +23,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-import gc, os, warnings
+import gc, os, io, re, warnings, tempfile, requests
 warnings.filterwarnings("ignore")
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -220,56 +225,99 @@ VALID_EVENTS = ["view", "cart", "remove_from_cart", "purchase"]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# CHUNKED LOADER  — no file-size ceiling
+# DATA LOADERS  — works on Streamlit Cloud and locally
 # ─────────────────────────────────────────────────────────────────────────────
-@st.cache_data(show_spinner=False)
-def load_csv(csv_path: str, sample_rows: int, chunk_size: int = 500_000) -> pd.DataFrame:
-    progress = st.sidebar.progress(0, text="Reading file…")
-    file_size = os.path.getsize(csv_path)
-    # rough row estimate for progress bar
-    est_total = sample_rows if sample_rows else max(file_size // 150, 1)
 
-    chunks, rows_loaded = [], 0
-    reader = pd.read_csv(
-        csv_path, dtype=DTYPES,
-        parse_dates=["event_time"],
-        chunksize=chunk_size,
-    )
-    for chunk in reader:
-        chunks.append(chunk)
-        rows_loaded += len(chunk)
-        pct = min(int(rows_loaded / est_total * 100), 99)
-        progress.progress(pct, text=f"Loaded {rows_loaded:,} rows…")
-        if sample_rows and rows_loaded >= sample_rows:
-            break
-
-    progress.progress(100, text="Cleaning…")
-    df = pd.concat(chunks, ignore_index=True)
-    del chunks; gc.collect()
-
-    # ── Clean ─────────────────────────────────────────────────────────────
+def _clean_df(df: pd.DataFrame) -> pd.DataFrame:
+    """Shared cleaning + feature engineering applied after any load method."""
     df.drop_duplicates(inplace=True)
     df.dropna(subset=["event_time", "event_type", "user_id"], inplace=True)
     df = df[df["event_type"].isin(VALID_EVENTS)].copy()
     df = df[df["price"] > 0].copy()
-
     if df["event_time"].dt.tz is None:
         df["event_time"] = df["event_time"].dt.tz_localize("UTC")
-
-    # ── Feature engineering ───────────────────────────────────────────────
     df["date"]         = pd.to_datetime(df["event_time"].dt.date)
     df["hour"]         = df["event_time"].dt.hour.astype("int8")
     df["day_of_week"]  = df["event_time"].dt.day_name().astype("category")
     df["week"]         = df["event_time"].dt.isocalendar().week.astype("int8")
     df["is_weekend"]   = df["day_of_week"].isin(["Saturday", "Sunday"])
     df["top_category"] = (
-        df["category_code"].astype(str)
-          .str.split(".").str[0]
-          .replace("nan", np.nan)
-          .astype("category")
+        df["category_code"].astype(str).str.split(".").str[0]
+          .replace("nan", np.nan).astype("category")
     )
-    progress.empty()
     return df
+
+
+@st.cache_data(show_spinner=False)
+def load_from_bytes(file_bytes: bytes, filename: str, sample_rows: int) -> pd.DataFrame:
+    """Load from in-memory bytes (Streamlit uploader). Chunked to save RAM."""
+    buf = io.BytesIO(file_bytes)
+    chunks, rows = [], 0
+    reader = pd.read_csv(buf, dtype=DTYPES, parse_dates=["event_time"], chunksize=500_000)
+    prog = st.sidebar.progress(0, text="Reading uploaded file…")
+    est = sample_rows if sample_rows else 5_000_000
+    for chunk in reader:
+        chunks.append(chunk)
+        rows += len(chunk)
+        prog.progress(min(int(rows / est * 100), 99), text=f"Read {rows:,} rows…")
+        if sample_rows and rows >= sample_rows:
+            break
+    prog.progress(100, text="Cleaning…"); prog.empty()
+    df = pd.concat(chunks, ignore_index=True); del chunks; gc.collect()
+    return _clean_df(df)
+
+
+@st.cache_data(show_spinner=False)
+def load_from_url(url: str, sample_rows: int) -> pd.DataFrame:
+    """Load from a direct-download URL (Google Drive, Dropbox, etc.)."""
+    # Convert Google Drive share link → direct download link automatically
+    gdrive_match = re.search(r"/d/([A-Za-z0-9_-]+)", url)
+    if gdrive_match:
+        file_id = gdrive_match.group(1)
+        url = f"https://drive.google.com/uc?export=download&id={file_id}&confirm=t"
+
+    prog = st.sidebar.progress(0, text="Downloading file…")
+    with requests.get(url, stream=True, timeout=300) as r:
+        r.raise_for_status()
+        total = int(r.headers.get("content-length", 0))
+        buf = io.BytesIO()
+        downloaded = 0
+        for chunk_bytes in r.iter_content(chunk_size=8 * 1024 * 1024):  # 8 MB chunks
+            buf.write(chunk_bytes)
+            downloaded += len(chunk_bytes)
+            if total:
+                prog.progress(min(int(downloaded / total * 100), 90),
+                              text=f"Downloaded {downloaded/1e6:.0f} / {total/1e6:.0f} MB…")
+    prog.progress(95, text="Parsing CSV…")
+    buf.seek(0)
+    chunks, rows = [], 0
+    reader = pd.read_csv(buf, dtype=DTYPES, parse_dates=["event_time"], chunksize=500_000)
+    for chunk in reader:
+        chunks.append(chunk)
+        rows += len(chunk)
+        if sample_rows and rows >= sample_rows:
+            break
+    prog.progress(100, text="Cleaning…"); prog.empty()
+    df = pd.concat(chunks, ignore_index=True); del chunks; gc.collect()
+    return _clean_df(df)
+
+
+@st.cache_data(show_spinner=False)
+def load_from_path(csv_path: str, sample_rows: int) -> pd.DataFrame:
+    """Load from a local file path. Only works when running app.py locally."""
+    prog = st.sidebar.progress(0, text="Reading file…")
+    est = sample_rows if sample_rows else max(os.path.getsize(csv_path) // 150, 1)
+    chunks, rows = [], 0
+    reader = pd.read_csv(csv_path, dtype=DTYPES, parse_dates=["event_time"], chunksize=500_000)
+    for chunk in reader:
+        chunks.append(chunk)
+        rows += len(chunk)
+        prog.progress(min(int(rows / est * 100), 99), text=f"Loaded {rows:,} rows…")
+        if sample_rows and rows >= sample_rows:
+            break
+    prog.progress(100, text="Cleaning…"); prog.empty()
+    df = pd.concat(chunks, ignore_index=True); del chunks; gc.collect()
+    return _clean_df(df)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -367,35 +415,74 @@ def compute_daily_rev(df):
 # ─────────────────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("## ⚙️ Data Source")
-    st.markdown(
-        '<p style="font-size:0.8rem;color:#8B949E;margin-bottom:8px;">'
-        'Type the <b style="color:#C9D1D9;">full path</b> to your Kaggle CSV.<br>'
-        'No upload — no file-size limit.</p>',
-        unsafe_allow_html=True,
+
+    # ── Choose loading method ─────────────────────────────────────────────────
+    load_mode = st.radio(
+        "How to load data",
+        ["⬆️  Upload file", "🔗  URL (Google Drive / Dropbox)", "📁  Local path (local only)"],
+        index=0,
+        help="Upload works on Streamlit Cloud. URL works anywhere. Local path only works when running app.py on your own machine.",
     )
 
-    # Auto-detect CSVs in current directory
-    local_csvs = sorted(
-        [f for f in os.listdir(".") if f.endswith(".csv")],
-        key=lambda x: os.path.getsize(x), reverse=True,
-    )
-    if local_csvs:
-        pick = st.selectbox("📂 CSVs detected in this folder", ["— enter path below —"] + local_csvs)
-        default_path = pick if pick != "— enter path below —" else ""
-    else:
-        default_path = ""
+    uploaded_file = None
+    gdrive_url    = ""
+    local_path    = ""
 
-    csv_path = st.text_input(
-        "📁 Full CSV path",
-        value=default_path,
-        placeholder="C:/Users/you/Desktop/ecom/2019-Nov.csv",
-        help=(
-            "Windows: C:/Users/sniks/OneDrive/Desktop/ecom/2019-Nov.csv  "
-            "(use forward slashes or double backslashes)\n"
-            "Mac/Linux: /data/2019-Nov.csv\n"
-            "Same folder as app.py: just type  2019-Nov.csv"
-        ),
-    )
+    if load_mode == "⬆️  Upload file":
+        st.markdown(
+            '<p style="font-size:0.8rem;color:#8B949E;margin-bottom:6px;">'
+            'Upload your Kaggle CSV directly.<br>'
+            '<b style="color:#FFA940;">Tip:</b> compress to .gz first to upload faster:<br>'
+            '<code style="font-size:0.75rem;">gzip 2019-Nov.csv</code> → uploads as 500 MB instead of 9 GB.</p>',
+            unsafe_allow_html=True,
+        )
+        uploaded_file = st.file_uploader(
+            "Choose CSV or CSV.GZ file",
+            type=["csv", "gz"],
+            help="Streamlit Cloud allows up to 200 MB by default. Add .streamlit/config.toml to raise the limit (see README).",
+        )
+        if uploaded_file:
+            mb = uploaded_file.size / 1e6
+            st.caption(f"📦 File size: {mb:.1f} MB")
+
+    elif load_mode == "🔗  URL (Google Drive / Dropbox)":
+        st.markdown(
+            '<p style="font-size:0.8rem;color:#8B949E;margin-bottom:6px;">'
+            'Paste a <b style="color:#C9D1D9;">Google Drive share link</b> or any direct download URL.<br>'
+            '<b>How to get Google Drive link:</b><br>'
+            '1. Upload CSV to Google Drive<br>'
+            '2. Right-click → Share → "Anyone with link"<br>'
+            '3. Copy link and paste below</p>',
+            unsafe_allow_html=True,
+        )
+        gdrive_url = st.text_input(
+            "Google Drive / Direct URL",
+            placeholder="https://drive.google.com/file/d/YOUR_FILE_ID/view?usp=sharing",
+        )
+
+    else:  # Local path
+        st.markdown(
+            '<p style="font-size:0.8rem;color:#FF6B6B;margin-bottom:6px;">'
+            '⚠️ <b>Local path only works when running app.py on your own machine.</b><br>'
+            'It will NOT work on Streamlit Cloud — use Upload or URL instead.</p>',
+            unsafe_allow_html=True,
+        )
+        local_csvs = []
+        try:
+            local_csvs = sorted(
+                [f for f in os.listdir(".") if f.endswith(".csv") or f.endswith(".gz")],
+                key=lambda x: os.path.getsize(x), reverse=True,
+            )
+        except Exception:
+            pass
+        if local_csvs:
+            pick = st.selectbox("CSVs in current folder", ["— type path below —"] + local_csvs)
+            local_path = pick if pick != "— type path below —" else ""
+        local_path = st.text_input(
+            "Full local path",
+            value=local_path,
+            placeholder="C:/Users/sniks/OneDrive/Desktop/ecom/2019-Nov.csv",
+        )
 
     st.markdown("---")
     st.markdown("### 🔢 Load Settings")
@@ -408,9 +495,6 @@ with st.sidebar:
         "All rows  (needs 16 GB+ RAM)":      0,
     }
     sample_rows = SAMPLE_MAP[st.selectbox("Rows to load", list(SAMPLE_MAP.keys()))]
-
-    CHUNK_MAP = {"500 K (default)": 500_000, "250 K (low RAM)": 250_000, "1 M (fast SSD)": 1_000_000}
-    chunk_size = CHUNK_MAP[st.selectbox("Chunk size", list(CHUNK_MAP.keys()))]
 
     st.markdown("---")
     st.markdown("### 🔎 Event Filter")
@@ -428,8 +512,7 @@ with st.sidebar:
         '<b style="color:#C9D1D9;">Dataset:</b><br>'
         '<a href="https://www.kaggle.com/mkechinov/ecommerce-behavior-data-from-multi-category-store" '
         'style="color:#58A6FF;">Kaggle — eCommerce Behavior</a><br>'
-        'Files: 2019-Oct → 2020-Apr<br>'
-        'Size: ~9 GB / file · 67M rows/month</p>',
+        'Files: 2019-Oct → 2020-Apr · ~9 GB/file</p>',
         unsafe_allow_html=True,
     )
 
@@ -441,7 +524,7 @@ st.markdown("""
 <div class="dash-header">
   <h1>🛒 eCommerce Funnel &amp; Retention Analysis</h1>
   <p>Multi-Category Online Store · Kaggle Dataset · Amazon Interview-Level Dashboard</p>
-  <span class="dash-badge">Path-based loader · No upload limit · Dark-mode native</span>
+  <span class="dash-badge">Upload · Google Drive URL · Local path · Dark-mode native</span>
 </div>
 """, unsafe_allow_html=True)
 
@@ -453,48 +536,81 @@ if "df_full" not in st.session_state:
     st.session_state["df_full"] = None
 
 if load_btn:
-    if not csv_path:
-        st.error("⚠️  Enter a CSV path in the sidebar first.")
+    try:
+        if load_mode == "⬆️  Upload file":
+            if uploaded_file is None:
+                st.error("⚠️  Please choose a file to upload first.")
+                st.stop()
+            with st.spinner(f"⏳ Reading **{uploaded_file.name}**…"):
+                st.session_state["df_full"] = load_from_bytes(
+                    uploaded_file.read(), uploaded_file.name, sample_rows
+                )
+
+        elif load_mode == "🔗  URL (Google Drive / Dropbox)":
+            if not gdrive_url.strip():
+                st.error("⚠️  Paste a Google Drive or direct download URL first.")
+                st.stop()
+            with st.spinner("⏳ Downloading file from URL…"):
+                st.session_state["df_full"] = load_from_url(gdrive_url.strip(), sample_rows)
+
+        else:  # local path
+            if not local_path.strip():
+                st.error("⚠️  Enter a local file path first.")
+                st.stop()
+            clean = os.path.normpath(local_path.strip().strip('"\'"'))
+            if not os.path.exists(clean):
+                st.error(
+                    f"❌ File not found: `{clean}`\n\n"
+                    "This mode only works when running **locally**. "
+                    "On Streamlit Cloud, use **Upload** or **URL** instead."
+                )
+                st.stop()
+            with st.spinner(f"⏳ Loading **{os.path.basename(clean)}**…"):
+                st.session_state["df_full"] = load_from_path(clean, sample_rows)
+
+        n = len(st.session_state["df_full"])
+        st.success(f"✅ Loaded **{n:,} rows** successfully!")
+
+    except requests.exceptions.RequestException as e:
+        st.error(f"❌ Download failed: {e}\n\nMake sure the Google Drive file is set to **Anyone with the link** can view.")
+        st.stop()
+    except Exception as e:
+        st.error(f"❌ Error loading data: {e}")
         st.stop()
 
-    # Normalize path: strip surrounding quotes, fix Windows/Unix slashes
-    csv_path_clean = csv_path.strip().strip('"').strip("'")
-    csv_path_clean = os.path.normpath(csv_path_clean)
-
-    if not os.path.exists(csv_path_clean):
-        st.error(
-            f"❌  File not found: `{csv_path_clean}`\n\n"
-            "**Quick fixes:**\n"
-            "- Place `2019-Nov.csv` in the **same folder as app.py** and just type `2019-Nov.csv`\n"
-            "- On Windows, use double backslashes or forward slashes: "
-            "`C:/Users/sniks/OneDrive/Desktop/ecom/2019-Nov.csv`\n"
-            "- Check spelling — the filename is case-sensitive"
-        )
-        st.stop()
-
-    size_gb = os.path.getsize(csv_path_clean) / 1e9
-    with st.spinner(f"⏳ Loading **{os.path.basename(csv_path_clean)}** ({size_gb:.2f} GB)…"):
-        st.session_state["df_full"] = load_csv(csv_path_clean, sample_rows, chunk_size)
-    st.success(f"✅ Loaded {len(st.session_state['df_full']):,} rows from {os.path.basename(csv_path_clean)}")
-
-# ── Not yet loaded ────────────────────────────────────────────────────────────
+# ── Not yet loaded ─────────────────────────────────────────────────────────────
 if st.session_state["df_full"] is None:
     st.markdown("""
     <div class="path-hint">
-      <h3 style="color:#C9D1D9;margin:0 0 12px;">📁 Point to your Kaggle CSV</h3>
-      <p>
-        1. Download any monthly file from
-        <a href="https://www.kaggle.com/mkechinov/ecommerce-behavior-data-from-multi-category-store"
-           target="_blank">Kaggle</a><br>
-        2. Enter the path in the sidebar — e.g.<br>
-        &nbsp;&nbsp;&nbsp;<code>C:/Users/sniks/OneDrive/Desktop/ecom/2019-Nov.csv</code> (Windows)<br>
-        &nbsp;&nbsp;&nbsp;<code>/data/2019-Nov.csv</code> (Mac/Linux)<br>
-        &nbsp;&nbsp;&nbsp;<code>2019-Nov.csv</code> (if CSV is in the same folder as app.py)<br>
-        3. Choose rows, then click <b>▶ Load / Reload Data</b>
-      </p>
-      <p style="margin-top:14px;font-size:0.82rem;color:#6B7280;">
-        Files are loaded in chunks — no memory issues on 9 GB files.
-      </p>
+      <h3 style="color:#C9D1D9;margin:0 0 14px;">📂 Load Your Kaggle Data</h3>
+      <p style="margin-bottom:16px;">Choose one of the three methods in the sidebar:</p>
+      <table style="width:100%;font-size:0.82rem;border-collapse:collapse;">
+        <tr>
+          <td style="padding:10px 12px;background:#1C2B3A;border-radius:6px 6px 0 0;color:#4FA8D5;font-weight:700;">⬆️ Upload file</td>
+          <td style="padding:10px 12px;background:#1C2B3A;border-radius:6px 6px 0 0;color:#C9D1D9;">
+            Best for files under 200 MB. Compress first:<br>
+            <code>gzip 2019-Nov.csv</code> → becomes ~500 MB → upload the .gz file
+          </td>
+        </tr>
+        <tr><td colspan="2" style="height:6px;"></td></tr>
+        <tr>
+          <td style="padding:10px 12px;background:#1C2B3A;border-radius:6px 6px 0 0;color:#52C41A;font-weight:700;">🔗 Google Drive URL</td>
+          <td style="padding:10px 12px;background:#1C2B3A;border-radius:6px 6px 0 0;color:#C9D1D9;">
+            <b>Best for large files (9 GB).</b><br>
+            1. Upload CSV to Google Drive<br>
+            2. Right-click → Share → Anyone with the link → Copy<br>
+            3. Paste the link in the sidebar
+          </td>
+        </tr>
+        <tr><td colspan="2" style="height:6px;"></td></tr>
+        <tr>
+          <td style="padding:10px 12px;background:#1C2B3A;border-radius:6px 6px 0 0;color:#FFA940;font-weight:700;">📁 Local path</td>
+          <td style="padding:10px 12px;background:#1C2B3A;border-radius:6px 6px 0 0;color:#C9D1D9;">
+            Only works when running <code>streamlit run app.py</code> on your own machine.<br>
+            <b>Does NOT work on Streamlit Cloud.</b>
+          </td>
+        </tr>
+      </table>
     </div>
     """, unsafe_allow_html=True)
     st.stop()
