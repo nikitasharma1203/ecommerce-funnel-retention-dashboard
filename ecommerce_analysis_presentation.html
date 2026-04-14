@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>eCommerce Analysis</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0B0E17;--bg2:#111521;--bg3:#181D2C;--border:#2A3050;
+  --text:#E8EAF6;--muted:#8892B0;--accent1:#4F8EF7;--accent2:#F7C948;
+  --accent3:#43D9A0;--accent4:#F7705C;--accent5:#B57BFA;
+  --font-head:'Syne',sans-serif;--font-body:'DM Sans',sans-serif;
+}
+html{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:14px;line-height:1.6}
+
+.deck{width:100%;overflow:hidden}
+
+.slide{
+  min-height:100vh;display:flex;flex-direction:column;justify-content:center;
+  padding:56px 64px;border-bottom:1px solid var(--border);position:relative;overflow:hidden
+}
+.slide::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 70% -10%,rgba(79,142,247,.07) 0%,transparent 70%);
+  pointer-events:none
+}
+
+/* NAV */
+.nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(11,14,23,.92);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 40px;height:52px;
+}
+.nav-title{font-family:var(--font-head);font-size:13px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
+.nav-tabs{display:flex;gap:4px}
+.nav-tab{
+  font-family:var(--font-body);font-size:12px;padding:5px 14px;border-radius:20px;
+  border:none;cursor:pointer;background:transparent;color:var(--muted);transition:.15s
+}
+.nav-tab.active,.nav-tab:hover{background:rgba(79,142,247,.15);color:var(--accent1)}
+.nav-tab.active{color:var(--text)}
+
+/* SLIDES hidden by default */
+.slide{display:none}
+.slide.visible{display:flex}
+
+/* TYPOGRAPHY */
+.eyebrow{
+  font-family:var(--font-head);font-size:11px;font-weight:700;
+  letter-spacing:.15em;text-transform:uppercase;color:var(--accent1);margin-bottom:12px
+}
+.slide-title{font-family:var(--font-head);font-size:clamp(28px,4vw,48px);font-weight:800;line-height:1.1;margin-bottom:16px}
+.slide-sub{font-size:15px;color:var(--muted);max-width:600px;line-height:1.7;margin-bottom:40px}
+.accent{color:var(--accent1)}
+.accent2{color:var(--accent2)}
+.accent3{color:var(--accent3)}
+.accent4{color:var(--accent4)}
+
+/* METRIC CARDS */
+.metric-row{display:grid;gap:16px;margin-bottom:40px}
+.metric-row.cols4{grid-template-columns:repeat(4,1fr)}
+.metric-row.cols3{grid-template-columns:repeat(3,1fr)}
+.metric-row.cols2{grid-template-columns:repeat(2,1fr)}
+.metric-card{
+  background:var(--bg3);border:1px solid var(--border);
+  border-radius:12px;padding:20px 24px;position:relative;overflow:hidden
+}
+.metric-card::after{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--card-accent,var(--accent1))
+}
+.metric-card .val{
+  font-family:var(--font-head);font-size:28px;font-weight:800;
+  color:var(--card-accent,var(--accent1));line-height:1;margin-bottom:6px
+}
+.metric-card .lbl{font-size:12px;color:var(--muted);font-weight:400;text-transform:uppercase;letter-spacing:.06em}
+.metric-card .sub{font-size:12px;color:var(--muted);margin-top:4px}
+
+/* FUNNEL */
+.funnel-wrap{display:flex;flex-direction:column;gap:4px;max-width:520px}
+.funnel-stage{display:flex;align-items:center;gap:16px}
+.funnel-bar-outer{flex:1;height:44px;background:var(--bg3);border-radius:6px;overflow:hidden;border:1px solid var(--border)}
+.funnel-bar-inner{height:100%;display:flex;align-items:center;padding:0 16px;font-family:var(--font-head);font-size:13px;font-weight:700;white-space:nowrap;transition:width 1s ease}
+.funnel-lbl{width:100px;font-size:12px;color:var(--muted);text-align:right}
+.funnel-num{width:140px;font-size:12px;color:var(--muted)}
+.drop-badge{
+  font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;
+  background:rgba(247,112,92,.12);color:var(--accent4);border:1px solid rgba(247,112,92,.25);
+  white-space:nowrap
+}
+.arrow-row{display:flex;align-items:center;gap:16px;padding:0 0 0 116px}
+.arrow-line{flex:1;height:1px;background:var(--border)}
+
+/* COHORT TABLE */
+.cohort-table{border-collapse:collapse;font-size:13px;width:100%}
+.cohort-table th{
+  padding:8px 14px;font-weight:500;color:var(--muted);font-size:11px;
+  letter-spacing:.06em;text-transform:uppercase;text-align:center;border-bottom:1px solid var(--border)
+}
+.cohort-table th:first-child{text-align:left}
+.cohort-table td{padding:10px 14px;text-align:center;font-family:var(--font-head);font-size:14px;font-weight:600;border-bottom:1px solid rgba(42,48,80,.5)}
+.cohort-table td:first-child{text-align:left;font-size:12px;color:var(--muted);font-family:var(--font-body);font-weight:400}
+.c100{background:rgba(67,217,160,.18);color:#43D9A0}
+.c-hi{background:rgba(67,217,160,.10);color:#5ED4A8}
+.c-mid{background:rgba(247,201,72,.10);color:#F7C948}
+.c-lo{background:rgba(247,112,92,.10);color:#F7705C}
+.c-na{color:var(--border)}
+
+/* RFM */
+.seg-bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.seg-name{width:160px;font-size:13px;color:var(--text);font-weight:500}
+.seg-bar-outer{flex:1;height:28px;background:var(--bg3);border-radius:4px;overflow:hidden;border:1px solid var(--border)}
+.seg-bar-inner{height:100%;display:flex;align-items:center;padding:0 10px;font-size:12px;font-weight:700;font-family:var(--font-head);transition:width 1s ease}
+.seg-rev{width:100px;text-align:right;font-size:12px;color:var(--muted)}
+.seg-count{width:70px;text-align:right;font-size:12px;color:var(--muted)}
+
+/* INSIGHT CARDS */
+.insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.insight-card{
+  background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:18px 20px;
+  border-left:3px solid var(--card-accent,var(--accent1))
+}
+.insight-card .i-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--card-accent,var(--accent1));margin-bottom:6px;font-weight:600}
+.insight-card .i-title{font-family:var(--font-head);font-size:15px;font-weight:700;margin-bottom:6px}
+.insight-card .i-body{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* REC TABLE */
+.rec-table{width:100%;border-collapse:collapse;font-size:13px}
+.rec-table th{padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+.rec-table td{padding:10px 12px;border-bottom:1px solid rgba(42,48,80,.4);vertical-align:top}
+.rec-table tr:last-child td{border-bottom:none}
+.pri-badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px}
+.p1{background:rgba(247,112,92,.12);color:var(--accent4);border:1px solid rgba(247,112,92,.2)}
+.p2{background:rgba(247,201,72,.12);color:var(--accent2);border:1px solid rgba(247,201,72,.2)}
+.p3{background:rgba(67,217,160,.12);color:var(--accent3);border:1px solid rgba(67,217,160,.2)}
+.p4{background:rgba(79,142,247,.12);color:var(--accent1);border:1px solid rgba(79,142,247,.2)}
+.impact{font-weight:700;color:var(--accent3);font-size:12px}
+
+/* SLIDE 1 HERO */
+.hero-layout{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+.hero-stat{font-family:var(--font-head);font-size:72px;font-weight:800;line-height:1;color:var(--accent1);display:block}
+.hero-stats-col{display:flex;flex-direction:column;gap:24px}
+.hero-stat-item{border-left:3px solid var(--border);padding-left:20px}
+.hero-stat-item .v{font-family:var(--font-head);font-size:32px;font-weight:800;color:var(--text)}
+.hero-stat-item .l{font-size:12px;color:var(--muted);margin-top:2px}
+.dataset-pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
+.pill{font-size:11px;padding:4px 12px;border-radius:20px;background:rgba(79,142,247,.08);border:1px solid rgba(79,142,247,.2);color:var(--muted)}
+
+/* TWO-COL */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+.chart-box{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px}
+.chart-title-row{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:14px;font-weight:600}
+
+/* PAGE INDICATORS */
+.page-ind{position:fixed;right:24px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:8px;z-index:200}
+.page-dot{width:6px;height:6px;border-radius:50%;background:var(--border);cursor:pointer;transition:.2s}
+.page-dot.active{background:var(--accent1);transform:scale(1.4)}
+
+.chart-legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:10px;font-size:12px;color:var(--muted)}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-dot{width:9px;height:9px;border-radius:2px;display:inline-block}
+</style>
+</head>
+<body>
+<h2 class="sr-only" style="position:absolute;left:-9999px">eCommerce Funnel and Retention Analysis — interactive presentation with real data from 42 million events</h2>
+
+<nav class="nav">
+  <span class="nav-title">eCommerce Analysis · Oct 2019</span>
+  <div class="nav-tabs" id="navTabs">
+    <button class="nav-tab active" onclick="goTo(0)">Overview</button>
+    <button class="nav-tab" onclick="goTo(1)">Dataset</button>
+    <button class="nav-tab" onclick="goTo(2)">Funnel</button>
+    <button class="nav-tab" onclick="goTo(3)">Retention</button>
+    <button class="nav-tab" onclick="goTo(4)">RFM</button>
+    <button class="nav-tab" onclick="goTo(5)">Insights</button>
+  </div>
+</nav>
+
+<div class="page-ind" id="pageDots"></div>
+
+<div class="deck" id="deck">
+
+<!-- ─── SLIDE 0: HERO ─────────────────────────────────────────────── -->
+<section class="slide visible" id="s0">
+  <div class="eyebrow">Amazon interview-level · eCommerce behavioral analysis</div>
+  <div class="hero-layout">
+    <div>
+      <div class="slide-title">42 Million Events.<br><span class="accent">One Store.</span><br>Actionable Clarity.</div>
+      <div class="slide-sub">Full-stack behavioral analysis of 3M users across the purchase funnel — with cohort retention, RFM segmentation, and a $229M revenue deep-dive.</div>
+      <div class="dataset-pills">
+        <span class="pill">42,349,874 events</span>
+        <span class="pill">3,021,435 users</span>
+        <span class="pill">165,647 products</span>
+        <span class="pill">3,444 brands</span>
+        <span class="pill">October 2019</span>
+        <span class="pill">Kaggle dataset</span>
+      </div>
+    </div>
+    <div class="hero-stats-col">
+      <div class="hero-stat-item">
+        <div class="v accent">$229.9M</div>
+        <div class="l">Total monthly revenue</div>
+      </div>
+      <div class="hero-stat-item">
+        <div class="v" style="color:var(--accent4)">88.84%</div>
+        <div class="l">Users who view but never add to cart</div>
+      </div>
+      <div class="hero-stat-item">
+        <div class="v" style="color:var(--accent3)">37.86%</div>
+        <div class="l">Repeat purchase rate</div>
+      </div>
+      <div class="hero-stat-item">
+        <div class="v" style="color:var(--accent2)">24.4%</div>
+        <div class="l">Average Week+1 retention</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SLIDE 1: DATASET ──────────────────────────────────────────── -->
+<section class="slide" id="s1">
+  <div class="eyebrow">Step 1 · Data foundation</div>
+  <div class="slide-title">Real data.<br><span class="accent">Cleaned rigorously.</span></div>
+  <div class="metric-row cols4">
+    <div class="metric-card" style="--card-accent:#4F8EF7">
+      <div class="val">42.4M</div><div class="lbl">Raw events</div>
+      <div class="sub">→ 42.3M after cleaning</div>
+    </div>
+    <div class="metric-card" style="--card-accent:#43D9A0">
+      <div class="val">30,220</div><div class="lbl">Duplicates removed</div>
+      <div class="sub">0.07% of dataset</div>
+    </div>
+    <div class="metric-card" style="--card-accent:#F7C948">
+      <div class="val">3,021,435</div><div class="lbl">Unique users</div>
+      <div class="sub">3.06 sessions/user avg</div>
+    </div>
+    <div class="metric-card" style="--card-accent:#B57BFA">
+      <div class="val">9,239,402</div><div class="lbl">Unique sessions</div>
+      <div class="sub">165,647 products · 3,444 brands</div>
+    </div>
+  </div>
+  <div class="chart-title-row">Event distribution — 42.3M total events</div>
+  <div class="chart-legend">
+    <span class="legend-item"><span class="legend-dot" style="background:#4F8EF7"></span>View 96.3%</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#43D9A0"></span>Cart 2.2%</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#F7C948"></span>Purchase 1.8%</span>
+  </div>
+  <div style="position:relative;height:160px">
+    <canvas id="evChart" role="img" aria-label="Event type distribution bar chart. Views: 40.8M. Cart: 926K. Purchase: 743K.">Views 40.8M, Cart 926K, Purchase 743K</canvas>
+  </div>
+</section>
+
+<!-- ─── SLIDE 2: FUNNEL ───────────────────────────────────────────── -->
+<section class="slide" id="s2">
+  <div class="eyebrow">Step 2 · Funnel analysis</div>
+  <div class="slide-title">Where does the<br><span class="accent4">revenue leak?</span></div>
+  <div class="two-col">
+    <div>
+      <div class="metric-row cols2" style="margin-bottom:32px">
+        <div class="metric-card" style="--card-accent:#4F8EF7">
+          <div class="val">11.49%</div><div class="lbl">Overall CVR</div>
+        </div>
+        <div class="metric-card" style="--card-accent:#F7705C">
+          <div class="val">88.84%</div><div class="lbl">View→Cart drop-off</div>
+        </div>
+        <div class="metric-card" style="--card-accent:#43D9A0">
+          <div class="val">$309.56</div><div class="lbl">Avg Order Value</div>
+        </div>
+        <div class="metric-card" style="--card-accent:#F7C948">
+          <div class="val">$229.9M</div><div class="lbl">Total Revenue</div>
+        </div>
+      </div>
+      <div class="funnel-wrap" id="funnelViz"></div>
+    </div>
+    <div>
+      <div class="chart-box">
+        <div class="chart-title-row">Daily CVR trend — October 2019</div>
+        <div style="position:relative;height:200px">
+          <canvas id="cvrChart" role="img" aria-label="Daily conversion rate trend for October 2019, fluctuating around 11.5%">Daily CVR fluctuating around 11.5% through October 2019</canvas>
+        </div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title-row">Revenue: Weekday vs Weekend</div>
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-dot" style="background:#4F8EF7"></span>Weekday $170.9M</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#F7C948;border-radius:50%"></span>Weekend $59.0M</span>
+        </div>
+        <div style="position:relative;height:140px">
+          <canvas id="wkChart" role="img" aria-label="Revenue split: Weekday 74.3% at $170.9M, Weekend 25.7% at $59M">Weekday $170.9M (74%), Weekend $59M (26%)</canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SLIDE 3: RETENTION ────────────────────────────────────────── -->
+<section class="slide" id="s3">
+  <div class="eyebrow">Step 3 · Cohort retention</div>
+  <div class="slide-title">Users acquired.<br><span class="accent2">How many stay?</span></div>
+  <div class="two-col">
+    <div>
+      <div class="metric-row cols3" style="margin-bottom:32px">
+        <div class="metric-card" style="--card-accent:#F7C948">
+          <div class="val">24.4%</div><div class="lbl">Avg Week+1</div>
+        </div>
+        <div class="metric-card" style="--card-accent:#F7705C">
+          <div class="val">21.9%</div><div class="lbl">Avg Week+2</div>
+        </div>
+        <div class="metric-card" style="--card-accent:#F7705C">
+          <div class="val">75.6%</div><div class="lbl">Lost after W+1</div>
+        </div>
+      </div>
+      <table class="cohort-table">
+        <thead>
+          <tr>
+            <th>Cohort</th><th>W+0</th><th>W+1</th><th>W+2</th><th>W+3</th><th>W+4</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Week 40</td><td class="c100">100%</td><td class="c-hi">35.6%</td><td class="c-mid">32.1%</td><td class="c-mid">27.8%</td><td class="c-lo">17.4%</td></tr>
+          <tr><td>Week 41</td><td class="c100">100%</td><td class="c-mid">27.2%</td><td class="c-mid">22.1%</td><td class="c-lo">12.7%</td><td class="c-na">—</td></tr>
+          <tr><td>Week 42</td><td class="c100">100%</td><td class="c-mid">22.4%</td><td class="c-lo">11.4%</td><td class="c-na">—</td><td class="c-na">—</td></tr>
+          <tr><td>Week 43</td><td class="c100">100%</td><td class="c-lo">12.5%</td><td class="c-na">—</td><td class="c-na">—</td><td class="c-na">—</td></tr>
+          <tr><td>Week 44</td><td class="c100">100%</td><td class="c-na">—</td><td class="c-na">—</td><td class="c-na">—</td><td class="c-na">—</td></tr>
+        </tbody>
+      </table>
+      <div style="display:flex;gap:16px;margin-top:12px;font-size:11px;color:var(--muted)">
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:rgba(67,217,160,.18);border-radius:2px;display:inline-block"></span>High &gt;25%</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:rgba(247,201,72,.10);border-radius:2px;display:inline-block"></span>Mid 12–25%</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="width:10px;height:10px;background:rgba(247,112,92,.10);border-radius:2px;display:inline-block"></span>Low &lt;12%</span>
+      </div>
+    </div>
+    <div>
+      <div class="chart-box">
+        <div class="chart-title-row">Retention curves by cohort</div>
+        <div class="chart-legend">
+          <span class="legend-item"><span class="legend-dot" style="background:#4F8EF7"></span>Week 40</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#43D9A0;border-radius:50%"></span>Week 41</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#F7C948"></span>Week 42</span>
+          <span class="legend-item"><span class="legend-dot" style="background:#F7705C;border-radius:50%"></span>Week 43</span>
+        </div>
+        <div style="position:relative;height:280px">
+          <canvas id="retChart" role="img" aria-label="Retention curves for 4 weekly cohorts showing sharp drop after week 1 then gradual decline">Cohort retention lines all drop sharply from 100% at W+0 to around 12-35% at W+1 then continue declining</canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SLIDE 4: RFM ───────────────────────────────────────────────── -->
+<section class="slide" id="s4">
+  <div class="eyebrow">Step 4 · RFM segmentation</div>
+  <div class="slide-title"><span class="accent5">347,118</span> buyers.<br>Five distinct segments.</div>
+  <div class="two-col">
+    <div>
+      <div id="segBars"></div>
+    </div>
+    <div>
+      <div class="chart-box" style="margin-bottom:16px">
+        <div class="chart-title-row">Revenue by segment</div>
+        <div style="position:relative;height:220px">
+          <canvas id="segRevChart" role="img" aria-label="Revenue by RFM segment. Loyal Customers lead with $140.5M, Champions $51.6M, Potential Loyalists $31.9M">Loyal Customers $140.5M, Champions $51.6M, Potential Loyalists $31.9M, At Risk $5.2M, Lost $0.7M</canvas>
+        </div>
+      </div>
+      <div class="metric-row cols2">
+        <div class="metric-card" style="--card-accent:#B57BFA">
+          <div class="val">29,754</div><div class="lbl">Champions</div>
+          <div class="sub">Avg rev: $1,733 · 4.1 orders</div>
+        </div>
+        <div class="metric-card" style="--card-accent:#4F8EF7">
+          <div class="val">119,696</div><div class="lbl">Loyal Customers</div>
+          <div class="sub">Avg rev: $1,174 · 3.3 orders</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── SLIDE 5: INSIGHTS + RECS ──────────────────────────────────── -->
+<section class="slide" id="s5">
+  <div class="eyebrow">Step 5 · Insights &amp; recommendations</div>
+  <div class="slide-title">What the data<br><span class="accent3">demands we do.</span></div>
+  <div class="insight-grid" style="margin-bottom:28px">
+    <div class="insight-card" style="--card-accent:#F7705C">
+      <div class="i-label">Critical — funnel</div>
+      <div class="i-title">88.84% view without adding to cart</div>
+      <div class="i-body">Biggest revenue leak. Poor PDP UX, missing social proof, and price anchoring keep 2.68M users from engaging. Fix the product page first.</div>
+    </div>
+    <div class="insight-card" style="--card-accent:#F7C948">
+      <div class="i-label">High — retention</div>
+      <div class="i-title">75.6% of users never return after W+1</div>
+      <div class="i-body">No re-engagement mechanism detected. A Day-3 / Day-7 personalised push campaign is the single highest-ROI retention investment.</div>
+    </div>
+    <div class="insight-card" style="--card-accent:#43D9A0">
+      <div class="i-label">Positive signal</div>
+      <div class="i-title">37.86% repeat purchase rate</div>
+      <div class="i-body">Strong product-market fit. Champions average $1,733 revenue each. A VIP loyalty tier could convert 137K Potential Loyalists to this level.</div>
+    </div>
+    <div class="insight-card" style="--card-accent:#B57BFA">
+      <div class="i-label">Strategic</div>
+      <div class="i-title">84.07% bounce rate — view only</div>
+      <div class="i-body">High bounce signals discovery friction. Weekend revenue is only 25.7% of weekly — promotions on weekends could shift this split significantly.</div>
+    </div>
+  </div>
+  <table class="rec-table">
+    <thead><tr><th>Priority</th><th>Initiative</th><th>Action</th><th>Expected impact</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pri-badge p1">P1</span></td><td style="font-weight:500">Abandoned cart emails</td><td style="color:var(--muted)">Auto-email within 1h; A/B 5% vs 10% off</td><td class="impact">+10–15% Cart CVR</td></tr>
+      <tr><td><span class="pri-badge p1">P1</span></td><td style="font-weight:500">Checkout UX overhaul</td><td style="color:var(--muted)">Under 5 fields, 1-click for returning users</td><td class="impact">+8–12% CVR</td></tr>
+      <tr><td><span class="pri-badge p2">P2</span></td><td style="font-weight:500">Week-1 retention push</td><td style="color:var(--muted)">Day 3 &amp; Day 7 personalised push</td><td class="impact">+15–20% W+1</td></tr>
+      <tr><td><span class="pri-badge p3">P3</span></td><td style="font-weight:500">Champions loyalty tier</td><td style="color:var(--muted)">VIP badge, early access, free shipping</td><td class="impact">+20% repeat rate</td></tr>
+    </tbody>
+  </table>
+</section>
+
+</div><!-- deck -->
+
+<script>
+const SLIDES = 6;
+let current = 0;
+
+function goTo(n) {
+  current = n;
+  document.querySelectorAll('.slide').forEach((s,i) => s.classList.toggle('visible', i===n));
+  document.querySelectorAll('.nav-tab').forEach((t,i) => t.classList.toggle('active', i===n));
+  document.querySelectorAll('.page-dot').forEach((d,i) => d.classList.toggle('active', i===n));
+  if (!chartsBuilt[n]) buildChart(n);
+}
+
+const pageDots = document.getElementById('pageDots');
+for(let i=0;i<SLIDES;i++){
+  const d = document.createElement('div');
+  d.className = 'page-dot' + (i===0?' active':'');
+  d.onclick = () => goTo(i);
+  pageDots.appendChild(d);
+}
+
+document.addEventListener('keydown', e => {
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') goTo(Math.min(current+1,SLIDES-1));
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') goTo(Math.max(current-1,0));
+});
+
+const chartsBuilt = Array(SLIDES).fill(false);
+chartsBuilt[0] = true;
+
+function buildChart(n) {
+  chartsBuilt[n] = true;
+  if(n===1) buildDatasetCharts();
+  if(n===2) buildFunnelCharts();
+  if(n===3) buildRetentionCharts();
+  if(n===4) buildRFMCharts();
+}
+
+const GRID = {color:'rgba(255,255,255,.05)'};
+const FONT = {family:"'DM Sans',sans-serif",size:11};
+const baseOpts = (extra={}) => ({
+  responsive:true, maintainAspectRatio:false,
+  plugins:{legend:{display:false}, tooltip:{backgroundColor:'#1A2035',titleFont:FONT,bodyFont:FONT,padding:10}},
+  scales:{x:{grid:GRID,ticks:{color:'#8892B0',font:FONT}},y:{grid:GRID,ticks:{color:'#8892B0',font:FONT}}},
+  ...extra
+});
+
+function buildDatasetCharts() {
+  new Chart(document.getElementById('evChart'), {
+    type:'bar',
+    data:{
+      labels:['view','cart','purchase'],
+      datasets:[{
+        data:[40779399,926516,742849],
+        backgroundColor:['#4F8EF7','#43D9A0','#F7C948'],
+        borderRadius:4, borderSkipped:false
+      }]
+    },
+    options:{...baseOpts(),
+      scales:{
+        x:{grid:GRID,ticks:{color:'#8892B0',font:FONT}},
+        y:{grid:GRID,ticks:{color:'#8892B0',font:FONT,callback:v=>(v/1e6).toFixed(0)+'M'}}
+      }
+    }
+  });
+}
+
+function buildFunnelCharts() {
+  const funnel = document.getElementById('funnelViz');
+  const stages = [
+    {label:'View',count:'3,021,273',pct:100,color:'#4F8EF7',drop:null},
+    {label:'Add to Cart',count:'337,082',pct:11.16,color:'#B57BFA',drop:'88.84% drop'},
+    {label:'Purchase',count:'347,118',pct:11.49,color:'#43D9A0',drop:'~0% abandon*'},
+  ];
+  stages.forEach((s,i)=>{
+    if(i>0){
+      const a = document.createElement('div');
+      a.className='arrow-row';
+      a.innerHTML=`<div class="arrow-line"></div><span class="drop-badge">${s.drop}</span><div class="arrow-line"></div>`;
+      funnel.appendChild(a);
+    }
+    const row = document.createElement('div');
+    row.className='funnel-stage';
+    row.innerHTML=`
+      <div class="funnel-lbl">${s.label}</div>
+      <div class="funnel-bar-outer">
+        <div class="funnel-bar-inner" style="width:${Math.max(s.pct,11.16)}%;background:${s.color}22;color:${s.color};border-right:2px solid ${s.color}">
+          ${s.pct.toFixed(2)}%
+        </div>
+      </div>
+      <div class="funnel-num">${s.count} users</div>`;
+    funnel.appendChild(row);
+  });
+  const note = document.createElement('p');
+  note.style.cssText='font-size:11px;color:#5a6480;margin-top:10px;padding-left:116px';
+  note.textContent='*Cart→Purchase rate >100% indicates some users skip cart and purchase directly';
+  funnel.appendChild(note);
+
+  const days=Array.from({length:31},(_,i)=>`Oct ${i+1}`);
+  const cvrData=[10.8,11.2,10.9,11.4,11.8,11.3,11.0,11.5,12.1,11.7,11.2,10.8,11.4,11.9,12.3,11.8,11.4,11.0,11.6,12.0,11.5,11.2,11.8,12.2,11.6,11.1,11.7,12.1,11.5,11.2,11.4];
+  new Chart(document.getElementById('cvrChart'),{
+    type:'line',
+    data:{labels:days,datasets:[{data:cvrData,borderColor:'#43D9A0',backgroundColor:'rgba(67,217,160,.08)',fill:true,tension:.4,pointRadius:0,borderWidth:2}]},
+    options:{...baseOpts(),
+      scales:{
+        x:{grid:GRID,ticks:{color:'#8892B0',font:FONT,maxTicksLimit:6}},
+        y:{grid:GRID,ticks:{color:'#8892B0',font:FONT,callback:v=>v.toFixed(1)+'%'},min:10,max:13}
+      }
+    }
+  });
+
+  new Chart(document.getElementById('wkChart'),{
+    type:'doughnut',
+    data:{
+      labels:['Weekday','Weekend'],
+      datasets:[{data:[170896790,59036422],backgroundColor:['#4F8EF7','#F7C948'],borderWidth:0,hoverOffset:4}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`$${(c.raw/1e6).toFixed(1)}M`}}},
+      cutout:'68%'
+    }
+  });
+}
+
+function buildRetentionCharts() {
+  const d40=[100,35.6,32.1,27.8,17.4];
+  const d41=[100,27.2,22.1,12.7];
+  const d42=[100,22.4,11.4];
+  const d43=[100,12.5];
+  new Chart(document.getElementById('retChart'),{
+    type:'line',
+    data:{
+      labels:['W+0','W+1','W+2','W+3','W+4'],
+      datasets:[
+        {label:'Week 40',data:d40,borderColor:'#4F8EF7',backgroundColor:'transparent',tension:.3,pointRadius:4,borderWidth:2,spanGaps:true},
+        {label:'Week 41',data:d41,borderColor:'#43D9A0',backgroundColor:'transparent',tension:.3,pointRadius:4,borderWidth:2,spanGaps:true,borderDash:[4,3]},
+        {label:'Week 42',data:d42,borderColor:'#F7C948',backgroundColor:'transparent',tension:.3,pointRadius:4,borderWidth:2,spanGaps:true},
+        {label:'Week 43',data:d43,borderColor:'#F7705C',backgroundColor:'transparent',tension:.3,pointRadius:4,borderWidth:2,spanGaps:true,borderDash:[4,3]},
+      ]
+    },
+    options:{...baseOpts({plugins:{legend:{display:false}}}),
+      scales:{
+        x:{grid:GRID,ticks:{color:'#8892B0',font:FONT}},
+        y:{grid:GRID,ticks:{color:'#8892B0',font:FONT,callback:v=>v+'%'},min:0,max:105}
+      }
+    }
+  });
+}
+
+function buildRFMCharts() {
+  const segs=[
+    {name:'Champions',users:29754,rev:51590000,color:'#B57BFA',pct:8.6},
+    {name:'Loyal Customers',users:119696,rev:140541000,color:'#4F8EF7',pct:34.5},
+    {name:'Potential Loyalists',users:137822,rev:31914000,color:'#43D9A0',pct:39.7},
+    {name:'At Risk',users:47804,rev:5177000,color:'#F7C948',pct:13.8},
+    {name:'Lost / Churned',users:12042,rev:710000,color:'#F7705C',pct:3.5},
+  ];
+  const maxUsers=137822;
+  const wrap=document.getElementById('segBars');
+  const hdr=document.createElement('div');
+  hdr.style.cssText='display:flex;gap:12px;margin-bottom:12px;font-size:11px;color:#5a6480;text-transform:uppercase;letter-spacing:.06em;font-weight:600';
+  hdr.innerHTML='<span style="width:160px">Segment</span><span style="flex:1">User share</span><span style="width:100px;text-align:right">Revenue</span><span style="width:70px;text-align:right">Users</span>';
+  wrap.appendChild(hdr);
+  segs.forEach(s=>{
+    const row=document.createElement('div');
+    row.className='seg-bar-row';
+    row.innerHTML=`
+      <div class="seg-name">${s.name}</div>
+      <div class="seg-bar-outer">
+        <div class="seg-bar-inner" style="width:${(s.users/maxUsers*100).toFixed(1)}%;background:${s.color}22;color:${s.color};border-right:2px solid ${s.color}">
+          ${s.pct.toFixed(1)}%
+        </div>
+      </div>
+      <div class="seg-rev">$${(s.rev/1e6).toFixed(1)}M</div>
+      <div class="seg-count">${s.users.toLocaleString()}</div>`;
+    wrap.appendChild(row);
+  });
+
+  new Chart(document.getElementById('segRevChart'),{
+    type:'bar',
+    data:{
+      labels:segs.map(s=>s.name.replace(' ','\n')),
+      datasets:[{data:segs.map(s=>s.rev),backgroundColor:segs.map(s=>s.color+'bb'),borderRadius:4,borderSkipped:false}]
+    },
+    options:{...baseOpts({indexAxis:'y'}),
+      scales:{
+        x:{grid:GRID,ticks:{color:'#8892B0',font:FONT,callback:v=>'$'+(v/1e6).toFixed(0)+'M'}},
+        y:{grid:{display:false},ticks:{color:'#8892B0',font:{...FONT,size:10}}}
+      }
+    }
+  });
+}
+
+buildChart(0);
+</script>
+</body>
+</html>
