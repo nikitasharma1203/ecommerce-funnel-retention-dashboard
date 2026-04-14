@@ -1,7 +1,7 @@
-# eCommerce Funnel & Retention Analysis
+# Funnel & Retention Analysis
 ---
 
-## Summary of the Full Pipeline
+## Pipeline
 
 ```
 Raw CSV (9 GB)
@@ -27,22 +27,21 @@ Raw CSV (9 GB)
     │
     ├──► [Advanced Analysis] ──► Category CVR, brand revenue, day×hour heatmap, rolling revenue
     │
-    └──► [Insights + Recs] ──► 7 insights, 7 recommendations, 5 A/B tests
+    └──► [Insights + Recs] ──► 7 insights, 7 recommendations
 ```
 ---
 
 ## Project Overview
-![Dashboard Screenshot](result/dashboard.png)
-![Dashboard Screenshot](result/dash.png)
+![Dashboard Screenshot](results/dashboard.png)
+![Dashboard Screenshot](results/dash.png)
 
 
-This project performs a full-stack behavioral analytics pipeline on a real-world eCommerce dataset containing **285 million user events** from a large multi-category online store. It covers funnel analysis, cohort retention, RFM segmentation, KPI dashboards, and strategic recommendations.
+Behavioral analytics pipeline on an eCommerce dataset containing **285 million user events** from a large multi-category online store. It covers funnel analysis, cohort retention, RFM segmentation, KPI dashboards, and strategic recommendations.
 
 **Potential answers to:**
 - Where are users dropping off in the purchase funnel?
 - Which user cohorts retain the best after acquisition?
 - Who are the most valuable customers (RFM)?
-- What A/B tests should the business run next?
 - What is the estimated revenue impact of each recommendation?
 
 ---
@@ -85,93 +84,6 @@ ecom/
 └── presentation.html                    
 ```
 
----
-
-## Analysis Pipeline
-
-The project follows a 10 step analytical pipeline:
-
-### Step 1: Data Loading
-- Reads CSV in 500K-row chunks using pandas `chunksize`
-- Supports multiple files (e.g. Oct + Nov together)
-- Optimizes memory with explicit `dtype` declarations (`int32`, `float32`, `category`)
-
-### Step 2: Data Cleaning
-- Removes exact duplicate rows
-- Drops rows with null `event_time`, `event_type`, or `user_id`
-- Filters to valid event types only (`view`, `cart`, `remove_from_cart`, `purchase`)
-- Removes records with `price <= 0`
-- Localizes timestamps to UTC
-
-### Step 3: Feature Engineering
-New columns derived from the raw data:
-- `date` — date only (for daily aggregations)
-- `hour` — hour of day (0–23)
-- `day_of_week` — Monday through Sunday
-- `week` — ISO calendar week number
-- `is_weekend` — boolean flag
-- `top_category` — first segment of `category_code` 
-
-### Step 4: Exploratory Data Analysis (EDA)
-- Daily event volume by type
-- Hourly traffic pattern (peak hour detection)
-- Event type distribution pie chart
-- Purchase price distribution with median/mean markers
-- Top 10 categories by purchase volume
-- Top 10 brands by revenue
-
-### Step 5: Funnel Analysis
-Measures the **unique user count** at each stage:
-
-```
-View  →  Add to Cart  →  Purchase
-```
-
-Computes:
-- **View-to-Cart Rate**: % of viewers who add to cart
-- **Cart-to-Purchase Rate**: % of cart-adders who buy
-- **Cart Abandonment Rate**: 100% − Cart-to-Purchase Rate
-- **Overall CVR**: % of viewers who eventually purchase
-- Daily CVR trend line
-
-### Step 6: Cohort Retention Analysis
-- Groups users by their **first-event week**
-- Tracks how many users from each cohort return in subsequent weeks
-- Produces a **retention matrix**: rows = cohorts, columns = W+0, W+1, W+2, ...
-- Values = % of original cohort still active in that week
-- Visualized as a color-coded heatmap and line curves
-
-### Step 7: KPI 
-- Overall CVR, View→Cart %, Cart→Purchase %, Cart Abandonment %
-- Total Revenue, Average Order Value, Revenue per User
-- Repeat Purchase Rate, Bounce Rate, Sessions per User
-- Weekend vs. Weekday revenue split
-
-### Step 8: RFM Segmentation
-Scores every purchasing user on three dimensions:
-- **R (Recency)**: Days since last purchase — lower = better
-- **F (Frequency)**: Number of purchases — higher = better
-- **M (Monetary)**: Total spend — higher = better
-
-Each scored 1–5 using rank-based quintiles (robust to skewed distributions). RFM score = R + F + M (3–15). Users classified into 5 segments:
-
-| Segment | Score | Meaning |
-|---------|-------|---------|
-| Champions | 13–15 | Bought recently, often, spent most |
-| Loyal Customers | 10–12 | Buy regularly, good value |
-| Potential Loyalists | 7–9 | Recent buyers, low frequency |
-| At Risk | 5–6 | Used to buy, haven't recently |
-| Lost / Churned | 3–4 | Haven't bought in a long time |
-
-### Step 9: Category Level Analysis
-- Category-level conversion rates (View→Cart and Cart→Purchase per category)
-- Brand revenue ranking
-- Event intensity heatmap (day-of-week × hour-of-day)
-- 7-day rolling average revenue trend
-
-### Step 10: Insights & Recommendations
-- 7 automated insights generated from live data
-- Prioritized recommendation table (P1 → P4)
 ---
 
 ## Definitions & Concepts
