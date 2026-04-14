@@ -32,6 +32,9 @@ Raw CSV (9 GB)
 ---
 
 ## Project Overview
+![Dashboard Screenshot](result/dashboard.png)
+![Dashboard Screenshot](result/dash.png)
+
 
 This project performs a full-stack behavioral analytics pipeline on a real-world eCommerce dataset containing **285 million user events** from a large multi-category online store. It covers funnel analysis, cohort retention, RFM segmentation, KPI dashboards, and strategic recommendations.
 
@@ -83,34 +86,6 @@ ecom/
 ```
 
 ---
-
-## Setup & Installation
-
-### Requirements
-- Python 3.9+
-- ~4 GB RAM minimum (8 GB recommended for large files)
-
-### Install dependencies
-
-```bash
-pip install streamlit pandas numpy plotly
-```
----
-
-## How to Run
-
-### Streamlit Dashboard 
-
-```bash
-streamlit run app.py
-```
-
-Then in the browser:
-1. Type the full path to your CSV in the sidebar: e.g. `C:\data\2019-Nov.csv` or `/data/2019-Nov.csv`
-2. Select how many rows to load (500K is fast and representative)
-3. Click **▶ Load / Reload Data**
-
-> The app uses **chunked loading**  it reads the file in 500K-row batches so even 9 GB files work on an 8 GB RAM machine.
 
 ## Analysis Pipeline
 
@@ -197,44 +172,6 @@ Each scored 1–5 using rank-based quintiles (robust to skewed distributions). R
 ### Step 10: Insights & Recommendations
 - 7 automated insights generated from live data
 - Prioritized recommendation table (P1 → P4)
-- 5-test A/B testing roadmap with hypotheses, metrics, and durations
-
----
-
-## Key Findings
-
-| # | Finding | Severity |
-|---|---------|----------|
-| 1 | Only ~17% of viewers add to cart — the largest revenue leak | 🔴 Critical |
-| 2 | ~37% of cart-adders never complete purchase | 🔴 Critical |
-| 3 | 75% of users never return after Week 1 | 🟠 High |
-| 4 | ~80% bounce rate (view-only users) | 🟠 High |
-| 5 | 40% of purchasers buy again — strong retention signal | 🟢 Positive |
-| 6 | Electronics (smartphones + notebooks) drive 42% of views | 🔵 Strategic |
-| 7 | Peak traffic window is 7–10 PM UTC | 🔵 Strategic |
-
----
-
-## Dashboard Features
-
-The Streamlit dashboard has 6 tabs:
-
-| Tab | Contents |
-|-----|----------|
-| 📊 Overview | 8 KPI cards, daily event volume, hourly traffic bar, event pie, weekday/weekend revenue |
-| 🔺 Funnel | Plotly funnel chart, stage metrics table, drop-off bars, daily CVR trend, price distribution |
-| 📅 Retention | Cohort heatmap, retention curves by cohort, raw matrix with conditional formatting |
-| 👥 RFM | Segment pie, revenue by segment bar, RFM scatter (Recency × Monetary × Frequency), summary table |
-| 🔬 Deep Dive | Brand revenue, category volume, day×hour heatmap, category CVR comparison, rolling revenue |
-| 💡 Insights | Auto-generated insights from data, recommendations table, A/B test roadmap |
-
-**Sidebar controls:**
-- Path-based CSV loader (no upload limit)
-- Auto-detects CSVs in current folder
-- Row limit selector (500K → All rows)
-- Chunk size selector (for RAM control)
-- Event type filter
-
 ---
 
 ## Definitions & Concepts
@@ -273,22 +210,5 @@ A grid where each row is an acquisition cohort (e.g. Week 44), each column is a 
 
 ### Sessions per User
 `Total unique sessions / Total unique users`. Measures engagement depth: a user who visits multiple times per month has higher sessions/user.
-
-### A/B Test
-A controlled experiment where users are randomly split into two groups: Control (existing experience) and Variant (new experience). The difference in primary metric between groups, after reaching statistical significance, tells us whether the change has a real effect.
-
----
-
-## Technologies Used
-
-| Tool | Purpose |
-|------|---------|
-| **Python 3.11** | Core language |
-| **pandas** | Data loading, cleaning, aggregation |
-| **numpy** | Numerical operations, RFM scoring |
-| **Plotly** | All interactive charts in the dashboard |
-| **Streamlit** | Web dashboard framework |
-| **Matplotlib + Seaborn** | Static charts in the notebook |
-| **Jupyter Notebook** | Exploratory analysis and documentation |
 
 ---
