@@ -1,5 +1,4 @@
 # eCommerce Funnel & Retention Analysis
-https://ecommerce-funnel-retention-dashboard-sbgappbigkv5jbwbis69kd9.streamlit.app
 ---
 
 ## Summary of the Full Pipeline
@@ -36,7 +35,7 @@ Raw CSV (9 GB)
 
 This project performs a full-stack behavioral analytics pipeline on a real-world eCommerce dataset containing **285 million user events** from a large multi-category online store. It covers funnel analysis, cohort retention, RFM segmentation, KPI dashboards, and strategic recommendations.
 
-**What this project answers:**
+**Potential answers to:**
 - Where are users dropping off in the purchase funnel?
 - Which user cohorts retain the best after acquisition?
 - Who are the most valuable customers (RFM)?
@@ -56,10 +55,6 @@ This project performs a full-stack behavioral analytics pipeline on a real-world
 | **File Size** | ~9 GB per monthly CSV |
 | **License** | Free to use with attribution |
 
-### Download Instructions
-1. Go to the [Kaggle dataset page](https://www.kaggle.com/mkechinov/ecommerce-behavior-data-from-multi-category-store)
-2. Download any monthly file (e.g. `2019-Nov.csv`)
-3. Place it in the project directory
 
 ### Schema
 
@@ -80,12 +75,11 @@ This project performs a full-stack behavioral analytics pipeline on a real-world
 ## Project Structure
 
 ```
-ecom/
-├── app.py                         
+ecom/                        
 ├── ecommerce_funnel_analysis.ipynb 
-├── summary.docx         
+├── results (png files)       
 ├── README.md                       
-└── 2019-Nov.csv                    
+└── presentation.html                    
 ```
 
 ---
