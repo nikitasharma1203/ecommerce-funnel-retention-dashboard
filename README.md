@@ -1,6 +1,6 @@
 # Funnel & Retention Analysis
 ---
-(https://ecommerce-funnel-retention-dashboard-rno8h8lng.vercel.app/)
+https://cartpulseecomm.netlify.app/
 ## Pipeline
 
 ```
