@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
+import { DataProvider } from "./hooks/useData";
 import AuthPage from "./components/auth/AuthPage";
 import Topbar from "./components/dashboard/Topbar";
 import Sidebar from "./components/dashboard/Sidebar";
@@ -15,7 +16,6 @@ import {
   ActiveUsersPage, ReturningPage, RFMPage, GeoPage,
 } from "./components/dashboard/OtherPages";
 import { generatePDFReport } from "./utils/pdfExport";
-import { aiInsights } from "./data/mockData";
 import "./index.css";
 
 function Dashboard() {
@@ -31,7 +31,7 @@ function Dashboard() {
   };
 
   const handleDownloadPDF = () => {
-    generatePDFReport(null, aiInsights, user?.displayName || "CartPulse User");
+    generatePDFReport(null, null, user?.displayName || "CartPulse User");
   };
 
   const renderPage = () => {
@@ -99,7 +99,9 @@ function AppInner() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppInner />
+      <DataProvider>
+        <AppInner />
+      </DataProvider>
     </AuthProvider>
   );
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { aiInsights } from "../../data/mockData";
+import { useData } from "../../hooks/useData";
 
 const typeColors = {
   good: { border: "#10b981", tag: "rgba(16,185,129,0.12)", tagText: "#10b981", glow: "rgba(16,185,129,0.08)" },
@@ -62,6 +62,8 @@ function InsightCard({ insight, expanded, onToggle }) {
 }
 
 export default function AIPage() {
+  const { data } = useData();
+  const { aiInsights, dataSource } = data;
   const [expanded, setExpanded] = useState(null);
   const [filter, setFilter] = useState("all");
 
@@ -90,9 +92,16 @@ export default function AIPage() {
             ✨ AI-Powered
           </span>
         </h1>
-        <p className="page-sub">
-          Rule-based insights from behavioral data · Ready for Gemini / OpenAI upgrade
-        </p>
+        <div style={{ display:"flex", alignItems:"center", gap:10, marginTop:4 }}>
+          <p className="page-sub" style={{ margin:0 }}>
+            Rule-based insights from behavioral data · Ready for Gemini / OpenAI upgrade
+          </p>
+          {dataSource === "csv" && (
+            <span style={{ fontSize:11, background:"rgba(16,185,129,0.15)", color:"var(--green)", border:"1px solid rgba(16,185,129,0.3)", borderRadius:6, padding:"2px 8px", fontWeight:600, whiteSpace:"nowrap" }}>
+              ✓ Updated with CSV Data
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Anomaly callout */}

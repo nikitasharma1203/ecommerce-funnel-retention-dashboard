@@ -4,8 +4,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, Cell,
 } from "recharts";
-import { monthlyRevenue, dailyData, categoryCVR, sourceBreakdown,
-  geoData, rfmSegments, dauSeries, hourlyActivity, dowActivity, newVsReturning } from "../../data/mockData";
+import { useData } from "../../hooks/useData";
 import KPICard from "../dashboard/KPICard";
 
 const TT = ({ active, payload, label }) => {
@@ -25,15 +24,22 @@ const TT = ({ active, payload, label }) => {
 const CAT_COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ec4899", "#06b6d4"];
 
 export function RevenuePage() {
+  const { data } = useData();
+  const { kpis, dailyData, monthlyRevenue, categoryCVR, dataSource } = data;
   const slice90 = dailyData.slice(-90);
   return (
     <div>
-      <div className="page-header"><h1 className="page-title">Revenue Analytics</h1></div>
+      <div className="page-header">
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <h1 className="page-title">Revenue Analytics</h1>
+          {dataSource === "csv" && <span style={{ fontSize:11, background:"rgba(16,185,129,0.15)", color:"var(--green)", border:"1px solid rgba(16,185,129,0.3)", borderRadius:6, padding:"2px 8px", fontWeight:600 }}>✓ Live CSV Data</span>}
+        </div>
+      </div>
       <div className="kpi-grid">
-        <KPICard label="Total Revenue"    value="$4.21M"  change={+12.4} icon="💰" accentColor="#6366f1" />
-        <KPICard label="Avg Order Value"  value="$86.20"  change={+3.2}  icon="💳" accentColor="#10b981" />
-        <KPICard label="Revenue / User"   value="$1.48"   change={+4.1}  icon="📈" accentColor="#8b5cf6" />
-        <KPICard label="Top Category"     value="Electronics" change="$1.1M" icon="🏆" accentColor="#f59e0b" />
+        <KPICard label="Total Revenue"   value={kpis.revenue.value}    change={kpis.revenue.change}   icon="💰" accentColor="#6366f1" />
+        <KPICard label="Avg Order Value" value={kpis.aov.value}        change={kpis.aov.change}       icon="💳" accentColor="#10b981" />
+        <KPICard label="Total Orders"    value={kpis.totalOrders.value} change={kpis.totalOrders.change} icon="📈" accentColor="#8b5cf6" />
+        <KPICard label="Top Category"    value={categoryCVR[0]?.name || "Electronics"} change={categoryCVR[0] ? `$${(categoryCVR[0].revenue/1000).toFixed(0)}K` : "$1.1M"} icon="🏆" accentColor="#f59e0b" />
       </div>
       <div className="section">
         <div className="section-header"><span className="section-title">Monthly Revenue by Category</span></div>
@@ -89,15 +95,22 @@ export function RevenuePage() {
 
 // ─── Conversion Page ──────────────────────────────────────────────────────────
 export function ConversionPage() {
+  const { data } = useData();
+  const { kpis, dailyData, sourceBreakdown, dataSource } = data;
   const slice30 = dailyData.slice(-30);
   return (
     <div>
-      <div className="page-header"><h1 className="page-title">Conversion Analytics</h1></div>
+      <div className="page-header">
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <h1 className="page-title">Conversion Analytics</h1>
+          {dataSource === "csv" && <span style={{ fontSize:11, background:"rgba(16,185,129,0.15)", color:"var(--green)", border:"1px solid rgba(16,185,129,0.3)", borderRadius:6, padding:"2px 8px", fontWeight:600 }}>✓ Live CSV Data</span>}
+        </div>
+      </div>
       <div className="kpi-grid">
-        <KPICard label="Overall CVR"     value="3.8%"  change={-0.4} icon="🎯" accentColor="#6366f1" />
-        <KPICard label="Cart → Purchase" value="31.6%" change={+1.2} icon="🛒" accentColor="#10b981" />
-        <KPICard label="Mobile CVR"      value="2.1%"  change={-1.7} icon="📱" accentColor="#ef4444" />
-        <KPICard label="Desktop CVR"     value="5.4%"  change={+0.8} icon="🖥" accentColor="#06b6d4" />
+        <KPICard label="Overall CVR"     value={kpis.convRate.value}   change={kpis.convRate.change}   icon="🎯" accentColor="#6366f1" />
+        <KPICard label="Cart Abandonment" value={kpis.cartAbandon.value} change={kpis.cartAbandon.change} icon="🛒" accentColor="#10b981" />
+        <KPICard label="Mobile CVR"      value="2.1%"                  change={-1.7}                   icon="📱" accentColor="#ef4444" />
+        <KPICard label="Desktop CVR"     value="5.4%"                  change={+0.8}                   icon="🖥" accentColor="#06b6d4" />
       </div>
       <div className="section">
         <div className="section-header"><span className="section-title">Daily CVR Trend</span></div>
@@ -177,17 +190,25 @@ export function RetentionPage() {
 
 // ─── Active Users Page ────────────────────────────────────────────────────────
 export function ActiveUsersPage() {
+  const { data } = useData();
+  const { kpis, dailyData, hourlyActivity, dowActivity, dataSource } = data;
+  const dauSeries = dailyData.map(d => ({ date: d.date, dau: d.dau || d.users || 0 }));
   return (
     <div>
-      <div className="page-header"><h1 className="page-title">Active Users</h1></div>
+      <div className="page-header">
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <h1 className="page-title">Active Users</h1>
+          {dataSource === "csv" && <span style={{ fontSize:11, background:"rgba(16,185,129,0.15)", color:"var(--green)", border:"1px solid rgba(16,185,129,0.3)", borderRadius:6, padding:"2px 8px", fontWeight:600 }}>✓ Live CSV Data</span>}
+        </div>
+      </div>
       <div className="kpi-grid">
-        <KPICard label="DAU"       value="94.2K" change={+3.1} icon="👤" accentColor="#6366f1" />
-        <KPICard label="WAU"       value="412K"  change={+6.2} icon="👥" accentColor="#8b5cf6" />
-        <KPICard label="MAU"       value="1.41M" change={+8.1} icon="🏢" accentColor="#06b6d4" />
-        <KPICard label="DAU/MAU"   value="6.7%"  change={+0.3} icon="📊" accentColor="#10b981" />
+        <KPICard label="DAU"     value={kpis.dau.value} change={kpis.dau.change} icon="👤" accentColor="#6366f1" />
+        <KPICard label="WAU"     value={kpis.wau.value} change={kpis.wau.change} icon="👥" accentColor="#8b5cf6" />
+        <KPICard label="MAU"     value={kpis.mau.value} change={kpis.mau.change} icon="🏢" accentColor="#06b6d4" />
+        <KPICard label="Total Users" value={kpis.totalUsers.value} change={kpis.totalUsers.change} icon="📊" accentColor="#10b981" />
       </div>
       <div className="section">
-        <div className="section-header"><span className="section-title">Daily Active Users (30D)</span></div>
+        <div className="section-header"><span className="section-title">Daily Active Users</span><span className="section-badge">{dataSource === "csv" ? "CSV Data" : "30D"}</span></div>
         <div style={{ height: 260 }}>
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={dauSeries.slice(-30)} margin={{ left: -10, right: 6 }}>
@@ -237,14 +258,21 @@ export function ActiveUsersPage() {
 
 // ─── Returning Customers Page ─────────────────────────────────────────────────
 export function ReturningPage() {
+  const { data } = useData();
+  const { kpis, newVsReturning, dataSource } = data;
   return (
     <div>
-      <div className="page-header"><h1 className="page-title">Returning Customers</h1></div>
+      <div className="page-header">
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <h1 className="page-title">Returning Customers</h1>
+          {dataSource === "csv" && <span style={{ fontSize:11, background:"rgba(16,185,129,0.15)", color:"var(--green)", border:"1px solid rgba(16,185,129,0.3)", borderRadius:6, padding:"2px 8px", fontWeight:600 }}>✓ Live CSV Data</span>}
+        </div>
+      </div>
       <div className="kpi-grid">
-        <KPICard label="Return Rate"          value="34.8%" change={+2.3}  icon="🔁" accentColor="#6366f1" />
-        <KPICard label="Avg Orders/Returner"  value="4.2"   change={+0.4}  icon="🛍" accentColor="#10b981" />
-        <KPICard label="LTV (Returning)"      value="$312"  change={+18}   icon="💎" accentColor="#8b5cf6" />
-        <KPICard label="Repeat 30D"           value="12.4%" change={+1.1}  icon="📦" accentColor="#f59e0b" />
+        <KPICard label="Return Rate"         value={kpis.returnRate.value} change={kpis.returnRate.change} icon="🔁" accentColor="#6366f1" />
+        <KPICard label="Avg Orders/Returner" value="4.2"   change={+0.4}  icon="🛍" accentColor="#10b981" />
+        <KPICard label="LTV (Returning)"     value={kpis.ltv.value}        change={kpis.ltv.change}        icon="💎" accentColor="#8b5cf6" />
+        <KPICard label="Repeat 30D"          value="12.4%" change={+1.1}  icon="📦" accentColor="#f59e0b" />
       </div>
       <div className="section">
         <div className="section-header"><span className="section-title">New vs Returning Customers</span></div>
@@ -268,6 +296,8 @@ export function ReturningPage() {
 
 // ─── RFM Segments Page ────────────────────────────────────────────────────────
 export function RFMPage() {
+  const { data } = useData();
+  const { rfmSegments } = data;
   return (
     <div>
       <div className="page-header"><h1 className="page-title">RFM Customer Segments</h1></div>
@@ -330,6 +360,8 @@ export function RFMPage() {
 
 // ─── Geographic Page ──────────────────────────────────────────────────────────
 export function GeoPage() {
+  const { data } = useData();
+  const { geoData } = data;
   return (
     <div>
       <div className="page-header"><h1 className="page-title">Geographic Analysis</h1></div>
