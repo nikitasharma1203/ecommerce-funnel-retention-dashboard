@@ -1,126 +1,477 @@
-# Funnel & Retention Analysis
----
-https://cartpulseecomm.netlify.app/
-## Pipeline
+<div align="center">
 
+# 🛒 CartPulse
+### eCommerce Behavioral Analytics Dashboard
+
+Behavioral analytics platform built using the Kaggle Multi-Category eCommerce Dataset.
+
+### Features
+- Funnel analysis
+- Cohort retention
+- RFM segmentation
+- KPI dashboards
+- Dynamic CSV upload pipeline
+- Firebase authentication
+- PDF export
+- Interactive analytics visualizations
+
+### Tech Stack
+React · Python · Pandas · Firebase · Recharts · Netlify
+
+<br/>
+
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://reactjs.org)
+[![Firebase](https://img.shields.io/badge/Firebase-Authentication-FFCA28?logo=firebase&logoColor=black)](https://firebase.google.com/)
+[![Netlify](https://img.shields.io/badge/Live-Demo-00C7B7?style=flat-square&logo=netlify&logoColor=white)](https://cartpulseecomm.netlify.app/)
+[![Recharts](https://img.shields.io/badge/Charts-Recharts-8884d8)](https://recharts.org/)
+[![Kaggle](https://img.shields.io/badge/Dataset-Kaggle-20BEFF?logo=kaggle&logoColor=white)](https://www.kaggle.com/datasets/mkechinov/ecommerce-behavior-data-from-multi-category-store)
+
+<br/>
+
+<p align="center">
+
+<a href="https://cartpulseecomm.netlify.app/">
+  <img src="https://img.shields.io/badge/🌐_Live_Demo-Open_App-00C7B7?style=for-the-badge&logo=netlify&logoColor=white" />
+</a>
+
+<a href="https://github.com/nikitasharma1203/ecommerce-funnel-retention-dashboard">
+  <img src="https://img.shields.io/badge/📂_GitHub-Repository-181717?style=for-the-badge&logo=github&logoColor=white" />
+</a>
+
+</p>
+
+</div>
+
+---
+
+# 📌 Project Overview
+
+CartPulse is an eCommerce behavioral analytics dashboard built using Kaggle’s Multi-Category Store dataset containing over **285M+ user interaction events**.
+
+The project combines:
+- Large-scale behavioral data analysis in Python
+- Interactive dashboard engineering in React
+- KPI computation and visualization
+- Funnel and retention analytics
+- Customer segmentation techniques
+- Dynamic CSV-based dashboard recomputation
+
+The goal was to bridge the gap between raw behavioral event analysis and an accessible BI-style analytics dashboard for non-technical stakeholders.
+
+---
+
+# ✅ Fully Implemented Features
+
+- Python analysis pipeline on real Kaggle eCommerce data
+- Funnel analysis and conversion tracking
+- Cohort retention analysis
+- RFM customer segmentation
+- Interactive React dashboard
+- Dynamic CSV upload pipeline with live dashboard recomputation
+- Firebase Authentication
+- Client-side PDF export
+- Responsive analytics visualizations
+- Real-time KPI recalculation after upload
+
+---
+
+# ⚠️ Demo / Precomputed Components
+
+Several dashboard modules recompute dynamically after CSV upload, including:
+
+- KPI cards
+- Revenue metrics
+- Funnel analytics
+- Conversion metrics
+- Activity trends
+- Revenue charts
+- Cart abandonment metrics
+
+Some advanced visualizations currently use precomputed demo datasets for frontend demonstration purposes:
+
+- Geographic analytics
+- Selected cohort views
+- Some RFM widgets
+- AI insight examples
+
+The underlying analytical logic exists in the Python notebook, while selected frontend sections use lightweight precomputed outputs to keep deployment performant on Netlify.
+
+---
+
+# 🏗 System Architecture
+
+```text
+Kaggle Dataset
+      ↓
+Python Analysis Pipeline
+(Pandas + NumPy + Matplotlib)
+      ↓
+Derived KPIs & Aggregates
+      ↓
+React Dashboard
+      ↓
+Interactive Charts + Filters
+      ↓
+CSV Upload Engine
+      ↓
+Live KPI Recalculation
 ```
-Raw CSV (9 GB)
-    │
-    ▼
-[Chunked Loading] ──► Pandas DataFrame (500K–2M rows in memory)
-    │
-    ▼
-[Data Cleaning] ──► Dedup, null removal, type validation, timezone normalization
-    │
-    ▼
-[Feature Engineering] ──► date, hour, day_of_week, week, is_weekend, top_category
-    │
-    ├──► [EDA] ──────────────► Daily/hourly patterns, price distribution, top brands/categories
-    │
-    ├──► [Funnel Analysis] ──► View→Cart→Purchase CVRs, drop-off rates, daily CVR trend
-    │
-    ├──► [Cohort Retention] ──► Retention matrix, heatmap, retention curves, avg W+1/W+2
-    │
-    ├──► [KPI Computation] ──► 13 business metrics, KPI card visualizations
-    │
-    ├──► [RFM Segmentation] ──► 5 customer segments, revenue by segment, RFM scatter
-    │
-    ├──► [Advanced Analysis] ──► Category CVR, brand revenue, day×hour heatmap, rolling revenue
-    │
-    └──► [Insights + Recs] ──► 7 insights, 7 recommendations
-```
----
-
-## Project Overview
-![Dashboard Screenshot](results/dashboard.png)
-![Dashboard Screenshot](results/dash.png)
-
-
-Behavioral analytics pipeline on an eCommerce dataset containing **285 million user events** from a large multi-category online store. It covers funnel analysis, cohort retention, RFM segmentation, KPI dashboards, and strategic recommendations.
-
-**Potential answers to:**
-- Where are users dropping off in the purchase funnel?
-- Which user cohorts retain the best after acquisition?
-- Who are the most valuable customers (RFM)?
-- What is the estimated revenue impact of each recommendation?
 
 ---
 
-## Dataset
+# 📊 Dataset
+
+Dataset used:
+
+### eCommerce Behavior Data from Multi-Category Store
+
+https://www.kaggle.com/datasets/mkechinov/ecommerce-behavior-data-from-multi-category-store
 
 | Property | Value |
-|----------|-------|
-| **Source** | [Kaggle — eCommerce Behavior Data from Multi-Category Store](https://www.kaggle.com/mkechinov/ecommerce-behavior-data-from-multi-category-store) |
-| **Provider** | Open CDP Project / REES46 Marketing Platform |
-| **Time Span** | October 2019 – April 2020 (7 months) |
-| **Total Events** | 285,000,000+ rows |
-| **File Size** | ~9 GB per monthly CSV |
-| **License** | Free to use with attribution |
-
-
-### Schema
-
-| Column | Type | Description |
-|--------|------|-------------|
-| `event_time` | datetime (UTC) | When the event occurred |
-| `event_type` | string | One of: `view`, `cart`, `remove_from_cart`, `purchase` |
-| `product_id` | int | Unique product identifier |
-| `category_id` | int | Numeric category identifier |
-| `category_code` | string | Hierarchical category name (e.g. `electronics.smartphone`) |
-| `brand` | string | Lowercase brand name (nullable) |
-| `price` | float | Product price in USD |
-| `user_id` | int | Permanent user identifier |
-| `user_session` | string | Temporary session ID (resets on long inactivity) |
+|---|---|
+| Dataset Size | ~285M behavioral events |
+| Users | ~1.4M unique users |
+| Time Period | Oct 2019 – Apr 2020 |
+| File Used | `2019-Oct.csv` |
+| File Size | ~5.8GB |
+| Event Types | view, cart, remove_from_cart, purchase |
 
 ---
 
-## Project Structure
+# 📐 Analytical Methods
 
+| Analysis | Method |
+|---|---|
+| Funnel Analysis | Event-stage conversion tracking |
+| Cohort Retention | Weekly cohort matrix |
+| RFM Segmentation | Quintile-based scoring |
+| Revenue Trends | Rolling window aggregation |
+| Conversion Analysis | Session-level CVR computation |
+| User Engagement | DAU / WAU / MAU metrics |
+| Time Pattern Analysis | Hourly + weekday behavior analysis |
+| Category Performance | Category-level conversion comparison |
+
+---
+
+# 🎯 Key Metrics From Analysis
+
+Computed from the `2019-Oct.csv` dataset.
+
+| KPI | Value |
+|---|---|
+| Total Events | 285M+ |
+| Unique Users | ~1.4M |
+| Overall Conversion Rate | ~0.19% |
+| View → Cart Rate | ~4.7% |
+| Cart → Purchase Rate | ~31% |
+| Average Order Value | ~$289 |
+| Repeat Purchase Rate | ~8–10% |
+| Bounce Rate | ~72% |
+| Peak Traffic Hours | 19:00–21:00 UTC |
+| W+1 Cohort Retention | ~18% |
+
+---
+
+# 📈 Core Analysis Performed
+
+## Funnel Analysis
+
+Behavioral funnel tracking across:
+
+```text
+View → Cart → Purchase
 ```
-ecom/                        
-├── ecommerce_funnel_analysis.ipynb 
-├── results (png files)       
-├── README.md                       
-└── presentation.html                    
+
+Metrics computed:
+- Conversion rate
+- Drop-off percentage
+- Cart abandonment
+- Daily CVR trends
+
+---
+
+## Cohort Retention Analysis
+
+Users grouped into weekly cohorts based on first activity.
+
+Measured:
+- Week-over-week retention
+- Retention decay curves
+- Churn patterns
+
+Average Week+1 retention:
+
+```text
+~18%
 ```
 
 ---
 
-## Definitions & Concepts
+## RFM Customer Segmentation
 
-### Funnel Analysis
-A method to measure how users progress through sequential steps of a user journey. Each stage shows fewer users than the previous because some drop off. Drop-off rate = 100% − conversion rate to next stage.
+Customers segmented using:
+- Recency
+- Frequency
+- Monetary value
 
-### Cohort Analysis
-Grouping users by a shared characteristic at a point in time and tracking their behavior over time. Reveals patterns invisible in aggregate: e.g., a campaign that acquires many users who all churn quickly will look bad in cohort view but fine in aggregate.
-
-### Retention Rate
-The percentage of users from a cohort who are still active (performing any event) in a given subsequent time period. Formula: `(Active users in week W+n) / (Users acquired in week W) × 100`.
-
-### Churn Rate
-The inverse of retention: `100% − Retention Rate`. A high churn rate at W+1 means most users never return after their first session.
-
-### Conversion Rate (CVR)
-The percentage of users who complete a desired action. In this context: the % of product viewers who eventually purchase. `CVR = Purchasers / Viewers × 100`.
-
-### Cart Abandonment Rate
-`(Users who added to cart but did NOT purchase) / (Users who added to cart) × 100`. Global e-commerce average is ~70%. Lower is better.
-
-### Average Order Value (AOV)
-`Total Revenue / Number of Purchases`. A key metric for measuring revenue efficiency, can be improved through cross-selling, upselling or bundle discounts.
-
-### Bounce Rate 
-Users who only performed `view` events and never added to cart or purchased. Measures behavioral non-engagement.
-
-### RFM (Recency, Frequency, Monetary)
-- **Recency**: How recently did the user last purchase? Recent buyers are more likely to respond to campaigns.
-- **Frequency**: How often do they purchase? High frequency buyers are loyalists.
-- **Monetary**: How much do they spend in total? High monetary users drive disproportionate revenue.
-
-### Cohort Heatmap
-A grid where each row is an acquisition cohort (e.g. Week 44), each column is a week offset (W+0, W+1, ...), and each cell shows retention % for that cohort at that week. Green = high retention, red = low.
-
-### Sessions per User
-`Total unique sessions / Total unique users`. Measures engagement depth: a user who visits multiple times per month has higher sessions/user.
+Segments include:
+- Champions
+- Loyal Customers
+- Potential Loyalists
+- At Risk
+- Lost Customers
 
 ---
+
+## Revenue & Behavioral Analytics
+
+Additional analyses:
+- Revenue trends
+- Hourly activity patterns
+- Category performance
+- Brand revenue concentration
+- Price distribution analysis
+- Weekend vs weekday revenue
+
+---
+
+# 🖥 Dashboard Modules
+
+| Module | Description |
+|---|---|
+| Overview | KPI cards, revenue trends, engagement metrics |
+| Funnel Analytics | Conversion funnel + abandonment tracking |
+| Cohort Analysis | Retention heatmaps and retention curves |
+| Revenue Dashboard | Revenue trends + category breakdown |
+| Active Users | DAU / WAU / MAU analytics |
+| Returning Customers | Repeat purchase analysis |
+| RFM Segmentation | Customer value segmentation |
+| AI Insights | Rule-based analytical insights |
+| CSV Upload | Upload dataset samples for live KPI recomputation |
+| Story Mode | Business recommendations and findings |
+
+---
+
+# 🔄 Data Flow
+
+## Real Data Processing
+- Python notebook performs large-scale analysis on the Kaggle dataset
+- KPIs and analytical outputs are computed from real behavioral data
+
+## Dashboard Layer
+The React dashboard visualizes:
+- Real computed aggregates
+- Uploaded CSV-derived metrics
+- Dynamically recomputed KPI values
+- Selected precomputed demo datasets
+
+## Why?
+Processing the entire 5.8GB dataset directly in-browser is impractical, so heavy analytical computation is performed offline in Python while the dashboard focuses on interactive analytics and visualization.
+
+---
+
+# ⚙️ Engineering Highlights
+
+- Built reusable React chart components using Recharts
+- Implemented centralized state management using Context API
+- Added dynamic CSV parsing using PapaParse
+- Structured dashboard into modular analytics pages
+- Implemented Firebase Authentication
+- Added client-side PDF export functionality
+- Designed responsive layouts with reusable design tokens
+- Built live KPI recomputation pipeline for uploaded CSVs
+- Added reusable filtering and chart rendering utilities
+
+---
+
+# 📁 Repository Structure
+
+```text
+cartpulse/
+│
+├── ecommerce_funnel_analysis.ipynb
+│
+├── src/
+│   ├── components/
+│   ├── hooks/
+│   ├── utils/
+│   ├── data/
+│   ├── App.jsx
+│   └── firebase.js
+│
+├── public/
+├── netlify.toml
+├── package.json
+└── README.md
+```
+
+---
+
+# 📂 CSV Upload Support
+
+The dashboard accepts CSV files using the schema:
+
+```text
+event_time,event_type,product_id,category_id,
+category_code,brand,price,user_id,user_session
+```
+
+Supported live recomputations:
+- Revenue KPIs
+- Conversion metrics
+- Cart abandonment
+- Revenue trends
+- Hourly activity
+- Funnel analytics
+- Category-level metrics
+- Session analytics
+
+All uploaded data is processed directly inside the browser.
+
+No uploaded data is sent to external servers.
+
+---
+
+# 🤖 AI Insights
+
+The dashboard includes a rule-based insight engine derived from KPI thresholds and behavioral patterns.
+
+Example insights:
+- Mobile cart abandonment higher than desktop
+- High-value customer segments driving majority revenue
+- Time windows with peak abandonment
+- Declining category conversion trends
+
+Optional Gemini API integration can be enabled through environment variables for natural-language insight generation.
+
+---
+
+# 🛠 Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 18 |
+| Charts | Recharts |
+| Authentication | Firebase Auth |
+| CSV Parsing | PapaParse |
+| PDF Export | jsPDF |
+| Hosting | Netlify |
+| Analysis | Pandas, NumPy, Matplotlib, Seaborn |
+| Date Utilities | date-fns |
+
+---
+
+# ⚡ Quick Start
+
+## 1. Clone Repository
+
+```bash
+git clone https://github.com/nikitasharma1203/ecommerce-funnel-retention-dashboard.git
+cd ecommerce-funnel-retention-dashboard
+```
+
+---
+
+## 2. Install Dependencies
+
+```bash
+npm install
+```
+
+---
+
+## 3. Configure Firebase
+
+Create:
+
+```bash
+.env.local
+```
+
+Add:
+
+```env
+REACT_APP_FIREBASE_API_KEY=YOUR_KEY
+REACT_APP_FIREBASE_AUTH_DOMAIN=YOUR_DOMAIN
+REACT_APP_FIREBASE_PROJECT_ID=YOUR_PROJECT_ID
+REACT_APP_FIREBASE_STORAGE_BUCKET=YOUR_BUCKET
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=YOUR_ID
+REACT_APP_FIREBASE_APP_ID=YOUR_APP_ID
+```
+
+---
+
+## 4. Start Development Server
+
+```bash
+npm start
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+---
+
+# 🌐 Live Deployment
+
+### Netlify Deployment
+
+https://cartpulseecomm.netlify.app/
+
+---
+
+# ⚠️ Current Limitations
+
+- Full 5.8GB dataset cannot be processed entirely in-browser
+- Some advanced dashboard modules currently use precomputed demo data
+- No backend persistence layer yet
+- Geographic analytics currently uses mock aggregation
+- Very large CSV uploads may impact browser performance
+
+---
+
+# 🚀 Future Improvements
+
+Planned enhancements:
+- FastAPI backend for scalable processing
+- DuckDB / ClickHouse analytical engine
+- Real-time event streaming
+- Dynamic cohort recomputation
+- LLM-generated analytical summaries
+- Role-based dashboard access
+- Scheduled report exports
+- Advanced recommendation engine
+
+---
+
+# 👩‍💻 Author
+
+## Nikita Sharma
+
+M.Sc. Data Science  
+DA-IICT (Dhirubhai Ambani Institute of Information and Communication Technology)
+
+### GitHub
+https://github.com/nikitasharma1203
+
+### Project Repository
+https://github.com/nikitasharma1203/ecommerce-funnel-retention-dashboard
+
+---
+
+# 📄 License
+
+This project is intended for academic and portfolio purposes.
+
+Dataset usage is subject to Kaggle’s terms and conditions.
+
+---
+
+<div align="center">
+
+CartPulse · Behavioral Analytics Portfolio Project
+
+</div>
