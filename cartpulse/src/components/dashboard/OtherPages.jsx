@@ -26,7 +26,7 @@ const CAT_COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ec4899", "#06b6d4"];
 export function RevenuePage() {
   const { data } = useData();
   const { kpis, dailyData, monthlyRevenue, categoryCVR, dataSource } = data;
-  const slice90 = dailyData.slice(-90);
+  const slice90 = (Array.isArray(dailyData) ? dailyData : []).slice(-90).map(d => ({ ...d, revenue: Math.max(0, Number(d.revenue)||0) }));
   return (
     <div>
       <div className="page-header">
@@ -97,7 +97,7 @@ export function RevenuePage() {
 export function ConversionPage() {
   const { data } = useData();
   const { kpis, dailyData, sourceBreakdown, dataSource } = data;
-  const slice30 = dailyData.slice(-30);
+  const slice30 = (Array.isArray(dailyData) ? dailyData : []).slice(-30).map(d => ({ ...d, cvr: Math.max(0, Number(d.cvr)||0) }));
   return (
     <div>
       <div className="page-header">
@@ -192,34 +192,59 @@ export function RetentionPage() {
 export function ActiveUsersPage() {
   const { data } = useData();
   const { kpis, dailyData, hourlyActivity, dowActivity, dataSource } = data;
-  const dauSeries = dailyData.map(d => ({ date: d.date, dau: d.dau || d.users || 0 }));
+
+  // Defensive — ensure all values are valid numbers
+  const dauSeries = (Array.isArray(dailyData) ? dailyData : [])
+    .map(d => ({ date: d.date || "", dau: Math.max(0, Number(d.dau || d.users || 0)) }))
+    .filter(d => d.date)
+    .slice(-30);
+
+  const safeHourly = (Array.isArray(hourlyActivity) && hourlyActivity.length === 24
+    ? hourlyActivity
+    : Array.from({ length: 24 }, (_, h) => ({ hour: `${h}:00`, events: 0 }))
+  ).map(h => ({ ...h, events: Math.max(0, Number(h.events) || 0) }));
+
+  const safeDow = (Array.isArray(dowActivity) && dowActivity.length > 0
+    ? dowActivity
+    : [{ day:"Mon",users:0 },{ day:"Tue",users:0 },{ day:"Wed",users:0 },{ day:"Thu",users:0 },{ day:"Fri",users:0 },{ day:"Sat",users:0 },{ day:"Sun",users:0 }]
+  ).map(d => ({ ...d, users: Math.max(0, Number(d.users) || 0) }));
+
+  const fmtK = v => { const n = Number(v) || 0; return n >= 1000 ? `${(n/1000).toFixed(0)}K` : String(n); };
+
   return (
     <div>
       <div className="page-header">
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <h1 className="page-title">Active Users</h1>
-          {dataSource === "csv" && <span style={{ fontSize:11, background:"rgba(16,185,129,0.15)", color:"var(--green)", border:"1px solid rgba(16,185,129,0.3)", borderRadius:6, padding:"2px 8px", fontWeight:600 }}>✓ Live CSV Data</span>}
+          {dataSource !== "demo" && <span style={{ fontSize:11, background:"rgba(16,185,129,0.15)", color:"var(--green)", border:"1px solid rgba(16,185,129,0.3)", borderRadius:6, padding:"2px 8px", fontWeight:600 }}>✓ Live CSV Data</span>}
         </div>
       </div>
       <div className="kpi-grid">
-        <KPICard label="DAU"     value={kpis.dau.value} change={kpis.dau.change} icon="👤" accentColor="#6366f1" />
-        <KPICard label="WAU"     value={kpis.wau.value} change={kpis.wau.change} icon="👥" accentColor="#8b5cf6" />
-        <KPICard label="MAU"     value={kpis.mau.value} change={kpis.mau.change} icon="🏢" accentColor="#06b6d4" />
-        <KPICard label="Total Users" value={kpis.totalUsers.value} change={kpis.totalUsers.change} icon="📊" accentColor="#10b981" />
+        <KPICard label="DAU"         value={kpis.dau?.value        || "—"} change={kpis.dau?.change}        icon="👤" accentColor="#6366f1" />
+        <KPICard label="WAU"         value={kpis.wau?.value        || "—"} change={kpis.wau?.change}        icon="👥" accentColor="#8b5cf6" />
+        <KPICard label="MAU"         value={kpis.mau?.value        || "—"} change={kpis.mau?.change}        icon="🏢" accentColor="#06b6d4" />
+        <KPICard label="Total Users" value={kpis.totalUsers?.value || "—"} change={kpis.totalUsers?.change} icon="📊" accentColor="#10b981" />
       </div>
       <div className="section">
-        <div className="section-header"><span className="section-title">Daily Active Users</span><span className="section-badge">{dataSource === "csv" ? "CSV Data" : "30D"}</span></div>
+        <div className="section-header">
+          <span className="section-title">Daily Active Users</span>
+          <span className="section-badge">{dataSource !== "demo" ? "CSV Data" : "30D"}</span>
+        </div>
         <div style={{ height: 260 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={dauSeries.slice(-30)} margin={{ left: -10, right: 6 }}>
-              <defs><linearGradient id="dauGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/><stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/></linearGradient></defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="date" tick={{ fill: "#64748b", fontSize: 9 }} tickLine={false} interval={4} />
-              <YAxis tick={{ fill: "#64748b", fontSize: 10 }} tickLine={false} tickFormatter={v=>`${(v/1000).toFixed(0)}K`} />
-              <Tooltip content={<TT />} />
-              <Area type="monotone" dataKey="dau" stroke="#06b6d4" strokeWidth={2} fill="url(#dauGrad)" name="DAU" />
-            </AreaChart>
-          </ResponsiveContainer>
+          {dauSeries.length === 0 ? (
+            <div style={{ height:"100%", display:"flex", alignItems:"center", justifyContent:"center", color:"var(--text3)", fontSize:13 }}>Upload orders.csv to see user activity</div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={dauSeries} margin={{ left: -10, right: 6 }}>
+                <defs><linearGradient id="dauGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#06b6d4" stopOpacity={0.3}/><stop offset="95%" stopColor="#06b6d4" stopOpacity={0}/></linearGradient></defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="date" tick={{ fill:"#64748b", fontSize:9 }} tickLine={false} interval={Math.max(1, Math.floor(dauSeries.length/6))} />
+                <YAxis tick={{ fill:"#64748b", fontSize:10 }} tickLine={false} tickFormatter={fmtK} />
+                <Tooltip content={<TT />} />
+                <Area type="monotone" dataKey="dau" stroke="#06b6d4" strokeWidth={2} fill="url(#dauGrad)" name="DAU" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          )}
         </div>
       </div>
       <div className="grid-2">
@@ -227,11 +252,11 @@ export function ActiveUsersPage() {
           <div className="section-header"><span className="section-title">Hourly Activity Pattern</span></div>
           <div style={{ height: 220 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={hourlyActivity} margin={{ left: -10, right: 6 }}>
+              <BarChart data={safeHourly} margin={{ left: -10, right: 6 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="hour" tick={{ fill: "#64748b", fontSize: 9 }} tickLine={false} interval={3} />
-                <YAxis tick={{ fill: "#64748b", fontSize: 9 }} tickLine={false} tickFormatter={v=>`${(v/1000).toFixed(0)}K`} />
-                <Tooltip contentStyle={{ background: "#0a0e17", border: "1px solid #1e3a5f", borderRadius: 8 }} />
+                <XAxis dataKey="hour" tick={{ fill:"#64748b", fontSize:9 }} tickLine={false} interval={3} />
+                <YAxis tick={{ fill:"#64748b", fontSize:9 }} tickLine={false} tickFormatter={fmtK} />
+                <Tooltip contentStyle={{ background:"#0a0e17", border:"1px solid #1e3a5f", borderRadius:8 }} />
                 <Bar dataKey="events" fill="#6366f199" radius={[3,3,0,0]} name="Events" />
               </BarChart>
             </ResponsiveContainer>
@@ -241,11 +266,11 @@ export function ActiveUsersPage() {
           <div className="section-header"><span className="section-title">Day of Week Activity</span></div>
           <div style={{ height: 220 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dowActivity} margin={{ left: -10, right: 6 }}>
+              <BarChart data={safeDow} margin={{ left: -10, right: 6 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                <XAxis dataKey="day" tick={{ fill: "#94a3b8", fontSize: 12 }} tickLine={false} />
-                <YAxis tick={{ fill: "#64748b", fontSize: 10 }} tickLine={false} tickFormatter={v=>`${(v/1000).toFixed(0)}K`} />
-                <Tooltip contentStyle={{ background: "#0a0e17", border: "1px solid #1e3a5f", borderRadius: 8 }} />
+                <XAxis dataKey="day" tick={{ fill:"#94a3b8", fontSize:12 }} tickLine={false} />
+                <YAxis tick={{ fill:"#64748b", fontSize:10 }} tickLine={false} tickFormatter={fmtK} />
+                <Tooltip contentStyle={{ background:"#0a0e17", border:"1px solid #1e3a5f", borderRadius:8 }} />
                 <Bar dataKey="users" fill="#8b5cf699" radius={[4,4,0,0]} name="Users" />
               </BarChart>
             </ResponsiveContainer>
@@ -260,32 +285,40 @@ export function ActiveUsersPage() {
 export function ReturningPage() {
   const { data } = useData();
   const { kpis, newVsReturning, dataSource } = data;
+
+  const safeNvR = (Array.isArray(newVsReturning) && newVsReturning.length > 0
+    ? newVsReturning
+    : [{ month:"No data", new:0, returning:0 }]
+  ).map(d => ({ ...d, new: Math.max(0, Number(d.new)||0), returning: Math.max(0, Number(d.returning)||0) }));
+
+  const fmtK = v => { const n = Number(v)||0; return n >= 1000 ? `${(n/1000).toFixed(0)}K` : String(n); };
+
   return (
     <div>
       <div className="page-header">
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <h1 className="page-title">Returning Customers</h1>
-          {dataSource === "csv" && <span style={{ fontSize:11, background:"rgba(16,185,129,0.15)", color:"var(--green)", border:"1px solid rgba(16,185,129,0.3)", borderRadius:6, padding:"2px 8px", fontWeight:600 }}>✓ Live CSV Data</span>}
+          {dataSource !== "demo" && <span style={{ fontSize:11, background:"rgba(16,185,129,0.15)", color:"var(--green)", border:"1px solid rgba(16,185,129,0.3)", borderRadius:6, padding:"2px 8px", fontWeight:600 }}>✓ Live CSV Data</span>}
         </div>
       </div>
       <div className="kpi-grid">
-        <KPICard label="Return Rate"         value={kpis.returnRate.value} change={kpis.returnRate.change} icon="🔁" accentColor="#6366f1" />
+        <KPICard label="Return Rate"         value={kpis.returnRate?.value || "—"} change={kpis.returnRate?.change} icon="🔁" accentColor="#6366f1" />
         <KPICard label="Avg Orders/Returner" value="4.2"   change={+0.4}  icon="🛍" accentColor="#10b981" />
-        <KPICard label="LTV (Returning)"     value={kpis.ltv.value}        change={kpis.ltv.change}        icon="💎" accentColor="#8b5cf6" />
+        <KPICard label="LTV (Returning)"     value={kpis.ltv?.value        || "—"} change={kpis.ltv?.change}        icon="💎" accentColor="#8b5cf6" />
         <KPICard label="Repeat 30D"          value="12.4%" change={+1.1}  icon="📦" accentColor="#f59e0b" />
       </div>
       <div className="section">
         <div className="section-header"><span className="section-title">New vs Returning Customers</span></div>
         <div style={{ height: 280 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={newVsReturning} margin={{ left: -10, right: 6 }}>
+            <BarChart data={safeNvR} margin={{ left: -10, right: 6 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="month" tick={{ fill: "#94a3b8", fontSize: 11 }} tickLine={false} />
-              <YAxis tick={{ fill: "#64748b", fontSize: 10 }} tickLine={false} tickFormatter={v=>`${(v/1000).toFixed(0)}K`} />
+              <XAxis dataKey="month" tick={{ fill:"#94a3b8", fontSize:11 }} tickLine={false} />
+              <YAxis tick={{ fill:"#64748b", fontSize:10 }} tickLine={false} tickFormatter={fmtK} />
               <Tooltip content={<TT />} />
-              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 11, color: "#94a3b8" }} />
+              <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize:11, color:"#94a3b8" }} />
               <Bar dataKey="new"       fill="#6366f199" radius={[0,0,0,0]} name="New Customers" stackId="a" />
-              <Bar dataKey="returning" fill="#10b98199" radius={[4,4,0,0]} name="Returning" stackId="a" />
+              <Bar dataKey="returning" fill="#10b98199" radius={[4,4,0,0]} name="Returning"     stackId="a" />
             </BarChart>
           </ResponsiveContainer>
         </div>
