@@ -174,7 +174,3 @@ cp .env.example .env.local
 # Add REACT_APP_FIREBASE_* keys
 npm start
 ```
-
----
-
-*Built as part of an M.Sc. Data Science portfolio — DA-IICT Gandhinagar*
