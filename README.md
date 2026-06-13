@@ -1,176 +1,475 @@
-# CartPulse
-### eCommerce Behavioral Analytics & Retention Intelligence Platform
+# 🛒 CartPulse
+
+### Customer Funnel, Retention & Revenue Analytics Platform
 
 [![Live Demo](https://img.shields.io/badge/Live-Demo-00C7B7?style=flat-square&logo=netlify)](https://cartpulseecomm.netlify.app/)
 [![React](https://img.shields.io/badge/Frontend-React_18-61DAFB?style=flat-square&logo=react)](https://reactjs.org)
 [![Firebase](https://img.shields.io/badge/Auth-Firebase-FFCA28?style=flat-square&logo=firebase)](https://firebase.google.com/)
-[![Kaggle](https://img.shields.io/badge/Dataset-285M_Events-20BEFF?style=flat-square&logo=kaggle)](https://www.kaggle.com/datasets/mkechinov/ecommerce-behavior-data-from-multi-category-store)
+[![Dataset](https://img.shields.io/badge/Dataset-42.3M_Events-20BEFF?style=flat-square)]()
 
-Customer retention intelligence platform built on a 285M-event eCommerce dataset. Python analysis pipeline for cohort retention, RFM segmentation, and CLV modelling — surfaced through a full-stack React dashboard with live CSV recomputation and Firebase-backed persistence.
+AI-assisted full-stack analytics platform built on **42M+ customer behavioral events** to identify customer drop-offs, measure retention, segment customers by value, and generate actionable business recommendations.
+
+CartPulse combines:
+
+- Funnel Analytics
+- Cohort Retention Analysis
+- RFM Customer Segmentation
+- Revenue & Category Intelligence
+- Interactive React Dashboard
+- Live CSV Analytics
+- AI-assisted Business Insights
 
 ---
 
-## Key Metrics (from 2019-Oct.csv analysis)
+## 🌐 Live Demo
+
+### Interactive Dashboard
+
+https://cartpulseecomm.netlify.app/
+
+AI was used as a development accelerator for the web app.
+
+---
+
+# 📌 Executive Summary
+
+Modern eCommerce companies invest heavily in customer acquisition, but sustainable growth depends on answering three questions:
+
+### 1. Where are customers dropping out of the purchase journey?
+
+### 2. Which customers are most valuable and which are at risk of churning?
+
+### 3. What interventions will maximise retention and revenue?
+
+CartPulse answers these questions by integrating:
+
+- Customer Funnel Analysis
+- Cohort Retention Analysis
+- Revenue Intelligence
+- RFM Customer Segmentation
+- AI-assisted Business Recommendations
+
+The result is a business intelligence platform that converts customer behavioral data into growth opportunities.
+
+---
+
+# 🎯 Business Problem
+
+eCommerce businesses often struggle with:
+
+- Low conversion from product views to purchases
+- High customer churn after acquisition
+- Difficulty identifying high-value customers
+- Limited visibility into revenue drivers
+- Fragmented analytics across marketing, product, and retention teams
+
+Without an integrated analytics framework, teams cannot prioritise initiatives with the highest business impact.
+
+**CartPulse addresses these challenges by combining customer journey analytics, retention analysis, and customer segmentation into a unified platform.**
+
+---
+
+# 📦 Dataset
+
+The analysis uses the **October 2019 eCommerce Behavior Dataset**.
+
+## Data Quality
+
+| Metric | Value |
+|------|------:|
+| Raw Dataset Size | 42,448,764 rows |
+| Duplicate Rows | 30,220 |
+| Clean Dataset Size | 42,349,874 rows |
+| Date Range | 2019-10-01 → 2019-10-31 |
+| Unique Users | 3,021,435 |
+| Unique Products | 165,647 |
+| Unique Brands | 3,444 |
+| Total Sessions | 9,239,402 |
+
+---
+
+## Event Distribution
+
+| Event Type | Count |
+|------|------:|
+| View | 40,779,399 |
+| Cart | 926,516 |
+| Purchase | 742,849 |
+
+---
+
+# 📊 Key Performance Indicators
 
 | KPI | Value |
-|---|---|
-| Dataset scale | 285M+ behavioral events |
-| Unique users | ~1.4M |
-| Overall conversion rate | 0.19% |
-| View → Cart rate | 4.7% |
-| Cart → Purchase rate | 31% |
-| Average order value | $289 |
-| W+1 cohort retention | ~18% |
-| Repeat purchase rate | 8–10% |
-| Peak traffic | 19:00–21:00 UTC |
+|------|------:|
+| Total Events | 42.3M |
+| Unique Users | 3.02M |
+| Total Sessions | 9.24M |
+| Sessions / User | 3.06 |
+| Overall Conversion Rate | 11.49% |
+| View → Cart Rate | 11.16% |
+| Total Revenue | $229.93M |
+| Average Order Value | $309.56 |
+| Revenue / User | $76.10 |
+| Repeat Purchase Rate | 37.86% |
+| Bounce Rate | 84.07% |
+| Avg Week+1 Retention | 24.4% |
+| Avg Week+2 Retention | 21.9% |
+| Peak Traffic Hour | 16:00 UTC |
 
 ---
 
-## What This Solves
+# 🖥 Interactive Dashboard
 
-eCommerce retention analytics requires connecting three analytical layers that are typically siloed: funnel diagnostics (where users drop off), cohort analysis (whether retention is improving over time), and value segmentation (which customers are worth retaining). CartPulse integrates all three into a single platform with the addition of a live upload pipeline — any compatible event dataset can be analysed without code.
+CartPulse includes a multi-page analytics dashboard designed for business users.
 
----
+### 📊 Overview
 
-## Analytics Pipeline
+- Revenue KPIs
+- User growth metrics
+- Order trends
+- Conversion trends
+- Device segmentation
+- Traffic source analysis
 
-The Python notebook processes the full 285M-event dataset through four analytical stages:
+### 💰 Revenue Analytics
 
-**Funnel Analysis**
-Event-stage conversion tracking across view → cart → purchase. The 4.7% view-to-cart rate with 31% cart-to-purchase rate identifies cart abandonment as the primary conversion lever — 69% of users who add to cart do not complete purchase.
+- Daily revenue trends
+- Brand-wise revenue contribution
+- Category revenue analysis
+- Average order value
+- Revenue concentration
 
-**Cohort Retention**
-Weekly cohort matrix (12 cohorts × 9-week offsets). W+1 retention of 18% benchmarks against eCommerce industry average of 20–25%, indicating moderate churn pressure in the first return window.
+### 🎯 Conversion Analytics
 
-**RFM Segmentation**
-Quintile-based Recency, Frequency, Monetary scoring segments 1.4M users into Champion, Loyal, Promising, At-Risk, and Lost tiers. The segmentation drives retention spend prioritisation — Champions and Loyals represent the majority of LTV despite being a minority of the user base.
+- Funnel conversion
+- Cart abandonment
+- Conversion by device
+- Conversion by acquisition source
 
-**CLV Modelling**
-Customer lifetime value estimation with value-tier segmentation, surfacing at-risk revenue concentration and informing intervention prioritisation.
+### 🔄 Retention Analytics
 
----
+- Cohort heatmaps
+- Retention curves
+- Week+1 retention
+- Returning customer behaviour
 
-## Live CSV Pipeline
+### 👥 Active Users
 
-The React dashboard recomputes all core KPIs and charts client-side on CSV upload via PapaParse — no backend required. Compatible with the Kaggle eCommerce Behavior Dataset schema:
+- DAU / WAU / MAU
+- Sessions per user
+- Hourly activity patterns
 
+### 🏆 RFM Segmentation
+
+Users are segmented into:
+
+- Champions
+- Loyal Customers
+- Potential Loyalists
+- At Risk
+- Lost / Churned
+
+with revenue contribution and behavioural characteristics.
+
+### 🤖 AI Insights
+
+The dashboard automatically generates:
+
+- Funnel bottlenecks
+- Retention risks
+- Revenue opportunities
+- Strategic business recommendations
+
+based on uploaded datasets.
+
+### 📁 Live CSV Analytics
+
+Upload any compatible event dataset:
+
+```csv
+event_time,
+event_type,
+product_id,
+category_id,
+category_code,
+brand,
+price,
+user_id,
+user_session
 ```
-event_time, event_type, product_id, category_id,
-category_code, brand, price, user_id, user_session
+
+The dashboard recomputes:
+
+- Revenue
+- Conversion Rate
+- Funnel Metrics
+- Cohort Analysis
+- RFM Segments
+- Revenue Trends
+- AI Insights
+
+**All processing is client-side. No uploaded data leaves the browser.**
+
+---
+
+# 🔽 Funnel Analysis
+
+Customer behaviour is analysed across:
+
+```text
+View → Cart → Purchase
 ```
 
-**What updates immediately on upload:**
-- Revenue, Orders, AOV (from `price` + `event_type=purchase`)
-- Conversion rate and cart abandonment (from event type counts)
-- Daily revenue trend (from `event_time` date grouping)
-- Full 5-step purchase funnel
-- Hourly activity patterns (from `event_time` hour extraction)
+### Unique Users by Stage
 
-All CSV processing is client-side. No uploaded data is sent to any server.
+| Stage | Users | % of View Users |
+|------|------:|------:|
+| View | 3,021,273 | 100% |
+| Add to Cart | 337,082 | 11.16% |
+| Purchase | 347,118 | 11.49% |
+
+### Important Note
+
+Purchase users exceed cart users because the dataset contains:
+
+- Direct purchases without cart events
+- Cross-session purchases
+- Non-sequential event histories
+
+Therefore, stage counts are interpreted as **participation rates** rather than a strict deterministic funnel.
+
+### Business Insights
+
+- Only **11.16%** of viewers add products to cart.
+- The biggest opportunity lies in improving product discovery and purchase intent.
+- Product detail page optimisation and checkout simplification are likely to have the highest conversion impact.
 
 ---
 
-## Architecture
+# 🗓 Cohort Retention Analysis
 
+Weekly cohorts are created using each user's first active week.
+
+Retention measures:
+
+> Percentage of users from an acquisition cohort who remain active in future weeks.
+
+### Cohort Retention Matrix
+
+| Cohort | W+1 | W+2 | W+3 | W+4 |
+|------|----:|----:|----:|----:|
+| Week 40 | 35.6% | 32.1% | 27.8% | 17.4% |
+| Week 41 | 27.2% | 22.1% | 12.7% | — |
+| Week 42 | 22.4% | 11.4% | — | — |
+| Week 43 | 12.5% | — | — | — |
+
+### Business Insights
+
+- Significant churn occurs immediately after acquisition.
+- Average Week+1 retention is **24.4%**.
+- Early re-engagement campaigns provide the largest retention opportunity.
+
+---
+
+# 🏆 Customer Value Analysis
+
+RFM (Recency, Frequency, Monetary) analysis was performed on:
+
+```text
+347,118 purchasing users
 ```
-Kaggle Dataset (285M events · 5.8GB)
-        ↓
-Python Analysis Pipeline
-(Pandas · NumPy · Matplotlib · Seaborn)
-        ↓
-Cohort Matrix · RFM Segments · CLV Estimates · Funnel KPIs
-        ↓
-React Dashboard (Netlify)
-        ↓
-Firebase Auth  ←→  Firestore (KPI snapshots · dataset history · session state)
-        ↓
-CSV Upload → PapaParse → Live KPI Recomputation → DataContext → All pages update
-        ↓
-Interactive Charts · Filters · Client-side PDF Export
+
+### Segment Summary
+
+| Segment | Users | Avg Orders | Avg Revenue | Total Revenue |
+|------|------:|------:|------:|------:|
+| Champions | 29,754 | 4.13 | $1,733 | $51.6M |
+| Loyal Customers | 119,696 | 3.26 | $1,174 | $140.5M |
+| Potential Loyalists | 137,822 | 1.22 | $231 | $31.9M |
+| At Risk | 47,804 | 1.02 | $108 | $5.2M |
+| Lost / Churned | 12,042 | 1.00 | $59 | $0.7M |
+
+### Business Insights
+
+- Loyal Customers generate the majority of revenue.
+- Champions contribute more than **$50M** despite representing a small fraction of customers.
+- Potential Loyalists represent the largest growth opportunity.
+- Lost customers contribute minimal revenue and require targeted reactivation campaigns.
+
+---
+
+# 💡 Business Recommendations
+
+## 🔴 Improve Purchase Funnel
+
+### Problem
+
+Most users browse products but never add them to cart.
+
+### Recommended Actions
+
+- Improve product detail pages
+- Add reviews and social proof
+- Simplify checkout flow
+- Introduce guest checkout
+- Recover abandoned carts through email reminders
+
+**Expected Impact**
+
++8–15% improvement in conversion rate
+
+---
+
+## 🟠 Increase Customer Retention
+
+### Problem
+
+Retention drops significantly after acquisition.
+
+### Recommended Actions
+
+- Personalised offers during Week+1
+- Day 3 and Day 7 re-engagement campaigns
+- Category-specific recommendations
+- Behaviour-based push notifications
+
+**Expected Impact**
+
++15–20% improvement in Week+1 retention
+
+---
+
+## 🟡 Maximise Customer Value
+
+### Problem
+
+Revenue is concentrated among a small group of customers.
+
+### Recommended Actions
+
+- Loyalty programs for Champions
+- Early-access promotions
+- Cross-selling complementary products
+- Dynamic discounts for high-value customers
+
+**Expected Impact**
+
++5–10% increase in AOV and repeat purchases
+
+---
+
+# ⚙️ Engineering Highlights
+
+### State Management
+
+Centralised `DataContext` architecture where a single `uploadCSV()` function triggers recomputation across all dashboard modules simultaneously.
+
+### Defensive Data Handling
+
+Chart components implement:
+
+- `safeChartData`
+- `safeArray`
+- `safeSlice`
+
+Malformed or incomplete CSVs produce empty states rather than crashes.
+
+### Persistence
+
+Firestore stores:
+
+- KPI snapshots
+- Dataset metadata
+- User dashboard state
+
+allowing users to resume previous analyses.
+
+### PDF Export
+
+Client-side report generation using:
+
+- jsPDF
+- jspdf-autotable
+
+No server round-trip required.
+
+---
+
+# 🏗 Architecture
+
+```text
+42M+ Event Dataset
+
+        │
+
+        ▼
+
+Python Analytics Pipeline
+
+(Pandas · NumPy · Matplotlib)
+
+        │
+
+        ├── Funnel Analysis
+        ├── Cohort Retention
+        ├── Revenue Analytics
+        ├── RFM Segmentation
+        └── Business Insights
+
+        ▼
+
+React Dashboard
+
+        │
+
+ ┌──────┴──────┐
+
+ ▼             ▼
+
+Firebase      Firestore
+
+(Auth)       (Persistence)
+
+        │
+
+        ▼
+
+CSV Upload
+
+        │
+
+PapaParse
+
+        │
+
+Live KPI Recalculation
+
+        │
+
+Interactive Visualisations
+
+        │
+
+AI-assisted Insight Generation
 ```
 
----
-
-## Dashboard Modules
-
-| Module | Description |
-|---|---|
-| Overview | KPI cards, revenue trend, device breakdown, RFM summary |
-| Revenue | Category revenue, 90-day trend, category conversion rates |
-| Conversion | Daily CVR, by-source and by-device breakdowns |
-| Active Users | DAU/WAU/MAU, hourly activity patterns, day-of-week heatmap |
-| Funnel Analytics | Animated 5-step funnel with drop-off percentages |
-| Cohort Analysis | 12×9 retention heatmap and cohort retention curves |
-| RFM Segments | Champion/Loyal/Promising/At-Risk/Lost value breakdown |
-| Returning Customers | Return rate, LTV, new vs returning customer trends |
-| AI Insights | Rule-based insight engine — updates on upload |
-| My Datasets | Upload history, KPI snapshots, dataset reload |
 
 ---
 
-## Engineering Highlights
-
-**State management:** Centralised DataContext — a single `uploadCSV()` function triggers recomputation across all 13 dashboard pages simultaneously.
-
-**Defensive data handling:** All chart components implement `safeChartData`, `safeArray`, and `safeSlice` guards via `dataHelpers.js` — malformed or partial CSVs produce empty states rather than crashes.
-
-**Persistence:** Firestore saves KPI snapshots, dataset metadata, and dashboard state per user. Re-login after a week and the previous analysis is still there.
-
-**PDF export:** Client-side report generation via jsPDF + autoTable — no server round-trip required.
-
----
-
-## Tech Stack
+# 🛠 Tech Stack
 
 | Layer | Technology |
-|---|---|
-| Frontend | React 18, Recharts, Tailwind CSS |
-| CSV Parsing | PapaParse |
+|------|------|
+| Frontend | React 18 |
+| Charts | Recharts |
+| Styling | Tailwind CSS |
+| CSV Processing | PapaParse |
 | Authentication | Firebase Auth |
 | Persistence | Firestore |
-| PDF Export | jsPDF + jspdf-autotable |
+| PDF Export | jsPDF |
 | Python Analysis | Pandas, NumPy, Matplotlib, Seaborn |
 | Deployment | Netlify |
+| Development Workflow | AI-assisted Engineering |
 
 ---
-
-## Repository Structure
-
-```
-frontend/
-├── src/
-│   ├── components/        Dashboard pages and UI components
-│   ├── hooks/
-│   │   ├── useAuth.js     Firebase Auth context + demo mode
-│   │   └── useData.js     Global DataContext — single source of truth
-│   ├── services/
-│   │   └── storageService.js   Firestore CRUD layer
-│   ├── utils/
-│   │   ├── csvParser.js        PapaParse + KPI derivation logic
-│   │   ├── dataHelpers.js      Chart safety guards
-│   │   └── pdfExport.js        Report generator
-│   └── App.jsx
-└── package.json
-
-ecommerce_funnel_analysis.ipynb     Full Python analysis notebook
-```
-
----
-
-## Quick Start
-
-```bash
-# Clone and install
-git clone https://github.com/nikitasharma1203/ecommerce-funnel-retention-dashboard.git
-cd ecommerce-funnel-retention-dashboard/frontend
-npm install
-
-# Run in demo mode (no Firebase config needed)
-npm start
-# → Click "Demo Account" for full dashboard access
-
-# Enable persistent login (optional)
-cp .env.example .env.local
-# Add REACT_APP_FIREBASE_* keys
-npm start
-```
