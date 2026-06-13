@@ -121,68 +121,46 @@ The analysis uses the **October 2019 eCommerce Behavior Dataset**.
 
 # 🖥 Interactive Dashboard
 
-CartPulse includes a multi-page analytics dashboard designed for business users.
+CartPulse provides an interactive React dashboard for exploring customer behavior, retention, and revenue metrics.
 
-### 📊 Overview
+| Module | Features |
+|-------|---------|
+| 📊 Overview | Revenue KPIs, user growth, conversion trends, device & traffic source analysis |
+| 💰 Revenue | Daily revenue trends, category analysis, AOV, brand-wise revenue |
+| 🎯 Conversion | Funnel metrics, cart abandonment, CVR by device & source |
+| 🔄 Retention | Cohort heatmaps, retention curves, returning customers |
+| 👥 Active Users | DAU/WAU/MAU, sessions per user, hourly activity |
+| 🏆 Customer Value | RFM segmentation with revenue contribution |
+| 🤖 AI Insights | Funnel bottlenecks, retention risks, business recommendations |
+| 📁 CSV Upload | Upload datasets and recompute KPIs & charts instantly |
 
-- Revenue KPIs
-- User growth metrics
-- Order trends
-- Conversion trends
-- Device segmentation
-- Traffic source analysis
+### Live CSV Analytics
 
-### 💰 Revenue Analytics
+Upload any compatible event dataset:
 
-- Daily revenue trends
-- Brand-wise revenue contribution
-- Category revenue analysis
-- Average order value
-- Revenue concentration
+```csv
+event_time,
+event_type,
+product_id,
+category_id,
+category_code,
+brand,
+price,
+user_id,
+user_session
+```
 
-### 🎯 Conversion Analytics
+The dashboard automatically recomputes:
 
-- Funnel conversion
-- Cart abandonment
-- Conversion by device
-- Conversion by acquisition source
+- Revenue & Orders
+- Conversion Rate
+- Funnel Metrics
+- Cohort Retention
+- RFM Segments
+- Revenue Trends
+- AI-generated Insights
 
-### 🔄 Retention Analytics
-
-- Cohort heatmaps
-- Retention curves
-- Week+1 retention
-- Returning customer behaviour
-
-### 👥 Active Users
-
-- DAU / WAU / MAU
-- Sessions per user
-- Hourly activity patterns
-
-### 🏆 RFM Segmentation
-
-Users are segmented into:
-
-- Champions
-- Loyal Customers
-- Potential Loyalists
-- At Risk
-- Lost / Churned
-
-with revenue contribution and behavioural characteristics.
-
-### 🤖 AI Insights
-
-The dashboard automatically generates:
-
-- Funnel bottlenecks
-- Retention risks
-- Revenue opportunities
-- Strategic business recommendations
-
-based on uploaded datasets.
-
+**All processing is client-side. No uploaded data leaves the browser.**
 ### 📁 Live CSV Analytics
 
 Upload any compatible event dataset:
