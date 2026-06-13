@@ -9,6 +9,10 @@
 
 AI-assisted full-stack analytics platform built on **42M+ customer behavioral events** to identify customer drop-offs, measure retention, segment customers by value, and generate actionable business recommendations.
 
+## Dashboard Preview
+
+![Dashboard](assets/dashboardf.png)
+
 CartPulse combines:
 
 - Funnel Analytics
