@@ -138,33 +138,6 @@ CartPulse provides an interactive React dashboard for exploring customer behavio
 | 🤖 AI Insights | Funnel bottlenecks, retention risks, business recommendations |
 | 📁 CSV Upload | Upload datasets and recompute KPIs & charts instantly |
 
-### Live CSV Analytics
-
-Upload any compatible event dataset:
-
-```csv
-event_time,
-event_type,
-product_id,
-category_id,
-category_code,
-brand,
-price,
-user_id,
-user_session
-```
-
-The dashboard automatically recomputes:
-
-- Revenue & Orders
-- Conversion Rate
-- Funnel Metrics
-- Cohort Retention
-- RFM Segments
-- Revenue Trends
-- AI-generated Insights
-
-**All processing is client-side. No uploaded data leaves the browser.**
 ### 📁 Live CSV Analytics
 
 Upload any compatible event dataset:
